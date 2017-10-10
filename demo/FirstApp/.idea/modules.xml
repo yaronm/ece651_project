@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$USER_HOME$/sync/docs/code/ece651/ece651_project/demo/FirstApp/FirstApp.iml" filepath="$USER_HOME$/sync/docs/code/ece651/ece651_project/demo/FirstApp/FirstApp.iml" />
+      <module fileurl="file://$USER_HOME$/sync/docs/code/ece651/ece651_project/demo/FirstApp/app/app.iml" filepath="$USER_HOME$/sync/docs/code/ece651/ece651_project/demo/FirstApp/app/app.iml" />
+    </modules>
+  </component>
+</project>
