@@ -1,0 +1,99 @@
+{
+  "project_info": {
+    "project_number": "268112959680",
+    "firebase_url": "https://fir-integration-c4ce0.firebaseio.com",
+    "project_id": "fir-integration-c4ce0",
+    "storage_bucket": "fir-integration-c4ce0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:268112959680:android:668534b803e0f310",
+        "android_client_info": {
+          "package_name": "firebaseintegration.ece.uwaterloo.ca.firebaseintegration"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "268112959680-v4ub0vkucas5nmaq65o3pmt54q3102j0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "firebaseintegration.ece.uwaterloo.ca.firebaseintegration",
+            "certificate_hash": "3bd7cc3768c55b4bd50f4a1360139e9912cf6eca"
+          }
+        },
+        {
+          "client_id": "268112959680-2g4mlh1gt0vd7tljf3n56ti18ci3juga.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBw9bPJM4IIFGX7aPelPA9YvmW_o7MCy0Q"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "268112959680-2g4mlh1gt0vd7tljf3n56ti18ci3juga.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:268112959680:android:f815b4f843ee9b2a",
+        "android_client_info": {
+          "package_name": "ca.uwaterloo.ece.firebaseintegration"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "268112959680-9ejjnp62nakc3h00o3864n3irh0fkvj0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ca.uwaterloo.ece.firebaseintegration",
+            "certificate_hash": "3bd7cc3768c55b4bd50f4a1360139e9912cf6eca"
+          }
+        },
+        {
+          "client_id": "268112959680-2g4mlh1gt0vd7tljf3n56ti18ci3juga.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBw9bPJM4IIFGX7aPelPA9YvmW_o7MCy0Q"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "268112959680-2g4mlh1gt0vd7tljf3n56ti18ci3juga.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

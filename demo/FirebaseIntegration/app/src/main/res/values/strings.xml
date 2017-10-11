@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Firebase Integration</string>
+    <string name="add_button_text">Add</string>
+    <string name="key_input_hint">Key</string>
+    <string name="value_input_hint">Value</string>
+    <string name="user_data_key">user</string>
+</resources>
