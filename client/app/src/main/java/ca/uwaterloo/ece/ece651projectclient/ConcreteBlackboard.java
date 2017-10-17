@@ -87,6 +87,7 @@ public class ConcreteBlackboard implements Blackboard {
     @Override
     public void setOrientation(float orientation) {
         this.orientation = orientation;
+        notifyObservers();
     }
 
     @Override
@@ -94,11 +95,13 @@ public class ConcreteBlackboard implements Blackboard {
         if (id == null)
             throw new NullPointerException();
         gameId = id;
+        notifyObservers();
     }
 
     @Override
     public void setLocation(Location location) {
         this.location = location;
+        notifyObservers();
     }
 
     @Override
@@ -115,6 +118,7 @@ public class ConcreteBlackboard implements Blackboard {
         if (username == null)
             throw new NullPointerException();
         this.username = username;
+        notifyObservers();
     }
 
     @Override
