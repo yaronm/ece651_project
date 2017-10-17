@@ -28,10 +28,10 @@ import java.util.Set;
 public class FirebaseComunication {
     private DatabaseReference mDatabase;
     String userId;
-    Blackboard bb;
+    ConcreteBlackboard bb;
     ArrayList<ValueEventListener> listeners;
 
-    public FirebaseComunication(Blackboard bb){
+    public FirebaseComunication(ConcreteBlackboard bb){
         this.bb = bb;
         //need to register to be notified with Blackboard Observer
 
@@ -129,13 +129,12 @@ public class FirebaseComunication {
             listeners.add(mDatabase.child("users").child(userId).child("location").addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    Map<String, Location> loc = new HashMap<String, Location>();
                     Location loc_obj= new Location(" ");
                     ArrayList<Double> loc_data = (ArrayList<Double>)dataSnapshot.getValue();
                     loc_obj.setLatitude(loc_data.get(0));
                     loc_obj.setLongitude(loc_data.get(1));
-                    loc.put(userId, loc_obj);
-                    bb.setLocations(loc);
+                    bb.locations.put(userId,loc_obj);
+                    bb.notifyObservers();
                 }
 
                 @Override
