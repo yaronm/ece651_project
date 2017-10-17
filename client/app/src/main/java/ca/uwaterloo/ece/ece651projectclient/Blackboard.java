@@ -20,7 +20,10 @@ public interface Blackboard {
 
     /**
      * Retrieves the distance and bearing to each other user. Bearing values are represented in
-     * degrees East of true North.
+     * degrees East of true North. Returned map is backup by this blackboard; changes to either
+     * will reflect in the other. It is the caller's responsibility to call
+     * {@link #notifyObservers()} after any modification of the returned map in order for observers
+     * of this blackboard to be notified of the modification.
      *
      * @return a map from usernames to polar coordinate distance/bearing pairs
      */
@@ -42,7 +45,10 @@ public interface Blackboard {
     public Location getLocation();
 
     /**
-     * Retrieves the location of each other user.
+     * Retrieves the location of each other user.  Returned map is backup by this blackboard;
+     * changes to either will reflect in the other. It is the caller's responsibility to call
+     * {@link #notifyObservers()} after any modification of the returned map in order for observers
+     * of this blackboard to be notified of the modification.
      *
      * @return a map from usernames to locations
      */
@@ -54,7 +60,10 @@ public interface Blackboard {
     public String getUsername();
 
     /**
-     * Retrieves the username of every other user participating in the current game.
+     * Retrieves the username of every other user participating in the current game. Returned set is
+     * backup by this blackboard; changes to either will reflect in the other. It is the caller's
+     * responsibility to call {@link #notifyObservers()} after any modification of the returned set
+     * in order for observers of this blackboard to be notified of the modification.
      *
      * @return a set of usernames
      */
@@ -123,5 +132,10 @@ public interface Blackboard {
      * @param usernames a set of usernames
      */
     public void setUsernames(Set<String> usernames);
+
+    /**
+     * Notifies all observers of this blackboard that it has been updated.
+     */
+    public void notifyObservers();
 
 }

@@ -2,7 +2,6 @@ package ca.uwaterloo.ece.ece651projectclient;
 
 import android.location.Location;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -35,7 +34,7 @@ public class ConcreteBlackboard implements Blackboard {
 
     @Override
     public Map<String, PolarCoordinates> getDeltas() {
-        return Collections.unmodifiableMap(deltas);
+        return deltas;
     }
 
     @Override
@@ -55,7 +54,7 @@ public class ConcreteBlackboard implements Blackboard {
 
     @Override
     public Map<String, Location> getLocations() {
-        return Collections.unmodifiableMap(locations);
+        return locations;
     }
 
     @Override
@@ -65,7 +64,7 @@ public class ConcreteBlackboard implements Blackboard {
 
     @Override
     public Set<String> getUsernames() {
-        return Collections.unmodifiableSet(usernames);
+        return usernames;
     }
 
     @Override
@@ -130,10 +129,8 @@ public class ConcreteBlackboard implements Blackboard {
         notifyObservers();
     }
 
-    /**
-     * Notifies each observer that this blackboard has been updated.
-     */
-    protected void notifyObservers() {
+    @Override
+    public void notifyObservers() {
         for (BlackboardObserver observer : observers)
             observer.onUpdate(this);
     }
