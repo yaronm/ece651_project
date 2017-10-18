@@ -36,12 +36,24 @@ public class FirebaseComunication {
         listeners = new ArrayList<>();
         // get access to the Firebase database
         mDatabase = FirebaseDatabase.getInstance().getReference();
-        createUser();
+
         //need to register to be notified with Blackboard Observer
         bb.userName().addObserver(new Observer() {
             @Override
             public void update(Observable observable, Object o) {
                 createUser();
+                mDatabase.child("users").child(userId).child("games").addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        join_game((String)dataSnapshot.getValue());
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        //do nothing
+                    }
+                });
+
             }
         });
         bb.userLocation().addObserver(new Observer(){
@@ -51,17 +63,6 @@ public class FirebaseComunication {
             }
         });
 
-        mDatabase.child("users").child(userId).child("games").addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                join_game((String)dataSnapshot.getValue());
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                //do nothing
-            }
-        });
 
     }
 
