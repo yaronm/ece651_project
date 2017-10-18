@@ -16,6 +16,8 @@ import ca.uwaterloo.ece.ece651projectclient.PolarCoordinates;
 public class ExampleBlackboardConnectionLogic {
 
     private static final String TAG = "ExampleBlkConLogic";
+    private Blackboard blackboard;
+
 
     public ExampleBlackboardConnectionLogic(Blackboard blackboard) {
         // store the blackboard
@@ -31,7 +33,6 @@ public class ExampleBlackboardConnectionLogic {
         });
     }
 
-    private Blackboard blackboard;
 
     /**
      * Computes the (mock) deltas from the updated other players locations.
