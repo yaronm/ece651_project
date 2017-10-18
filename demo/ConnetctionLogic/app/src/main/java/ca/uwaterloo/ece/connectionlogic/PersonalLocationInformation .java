@@ -139,13 +139,18 @@ public class ConnectionLogic {
         blackboard.othersLocations().set(othersLocations);
     }
 
-    //get current orientation
+    /**
+     * get current orientation
+     */
     public static void changeDirection{
         direction = location.getBearing();
     }
 
+    /**
+     * update direction
+     * */
     public void updateOrientation() {
-
+        blackboard.userOrientation().set(direction);
     }
 
 }
