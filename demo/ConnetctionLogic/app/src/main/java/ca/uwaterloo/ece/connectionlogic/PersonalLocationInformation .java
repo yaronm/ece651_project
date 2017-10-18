@@ -1,26 +1,33 @@
-package ca.uwaterloo.ece.connetctionlogic;
+package ca.uwaterloo.ece.connectionlogic;
 
 /**
- * Created by Chen XU and Haoyuan Zhang on 2017/10/18.
+ *  This class is for connection logic.
+ *      a. Get user location and orientation to update
+ *      b. Get other locations
+ *      c. compute deltas and update
  *
- * This class is for connection logic.
- * a. Get user location and orientation to update
- * b. Get other locations
- * c. compute deltas and update
+ *  Created by Chen XU and Haoyuan Zhang on 2017/10/18.
+ *  @author Chen XU and Haoyuan Zhang
  *
- *class PersonalLocationInformation(String username)
+ *  Constructor
+ *  ConnectionLogic(Activity current_activity, Blackboard blackboard, String myname)();
  *  @param  Activity current_activity
  *  @param  Blackboard blackboard
  *  @param  String username
  *
+ *
  * Methods:
- * 1. void getOurLocation();
- *    create a instance of location manager and location listener;
- * 2. void updateLocation();
- *    update location of user to the blackboard;
- * 3. void readOtherLocation();
- *    void computeDeltas();
- *   update deltas to the blackboard;
+ * 1. void getOurLocation(); //start location service
+ *    This method can start monitor changes of user location
+ *    Create a instance of location manager and location listener;
+ *
+ * 2. void updateLocation(); //update our location
+ *    Update location of user to the blackboard;
+ *
+ * 3. void readOtherLocation(); //download other locations, compute deltas and update
+ *    Monitor and read other users locations from blackboard
+ *    Call computeDeltas(); to compute deltas
+ *    Update deltas to the blackboard;
  */
 
 import android.app.Activity;
@@ -48,12 +55,18 @@ public class ConnectionLogic {
     private Blackboard blackboard;
 
     //set parameters
+    /**
+     * This is constructor of class ConnectionLogic
+     * */
     public ConnectionLogic(Activity current_activity, Blackboard blackboard, String myname){
         this.current_activity=current_activity;
         this.blackboard=blackboard;
         this.myname = myname;
     }
 
+    /**
+    * get user location
+    * */
     public void getOurLocation(){
     locationManager = (LocationManager) current_activity.getSystemService(Context.LOCATION_SERVICE);
     //choose provider to get locations
@@ -71,6 +84,9 @@ public class ConnectionLogic {
     locationManager.requestLocationUpdates(provider, 5000, 1, new myLocationListener);
     }
 
+    /**
+     * get other location
+     * */
     public void readOtherLocation(){
         // as the game logic, observe the blackboard for changes to the other players locations
         blackboard.othersLocations().addObserver(new Observer() {
@@ -83,6 +99,9 @@ public class ConnectionLogic {
         });
     }
 
+    /**
+     * compute deltas
+     * */
     public void computeDeltas{
         // get the other players locations from the blackboard
         Map<String, Location> othersLocations = blackboard.othersLocations().value();
@@ -106,6 +125,9 @@ public class ConnectionLogic {
         blackboard.othersDeltas().set(othersDeltas);
     }
 
+    /**
+     * updateLocation
+     * */
     public void updateLocation() {
 
         // get the other players locations from the blackboard
@@ -117,14 +139,13 @@ public class ConnectionLogic {
         blackboard.othersLocations().set(othersLocations);
     }
 
-    public void updateOrientation() {
-
-    }
-
-
     //get current orientation
     public static void changeDirection{
         direction = location.getBearing();
+    }
+
+    public void updateOrientation() {
+
     }
 
 }

@@ -1,4 +1,4 @@
-package ca.uwaterloo.ece.connetctionlogic;
+package ca.uwaterloo.ece.connectionlogic;
 
 import org.junit.Test;
 

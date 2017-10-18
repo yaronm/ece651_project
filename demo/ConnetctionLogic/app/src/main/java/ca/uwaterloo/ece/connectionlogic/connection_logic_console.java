@@ -1,4 +1,4 @@
-package ca.uwaterloo.ece.connetctionlogic;
+package ca.uwaterloo.ece.connectionlogic;
 
 /**
  * Created by Terry on 2017/10/18.

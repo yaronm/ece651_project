@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
 
-    package="ca.uwaterloo.ece.connetctionlogic">
+    package="ca.uwaterloo.ece.connectionlogic">
 
     <application
         android:allowBackup="true"
