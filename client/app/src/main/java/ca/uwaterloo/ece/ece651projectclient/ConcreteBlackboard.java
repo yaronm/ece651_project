@@ -4,135 +4,61 @@ import android.location.Location;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * A concrete blackboard implementation.
- *
- * @see Blackboard
- */
 public class ConcreteBlackboard implements Blackboard {
 
-    List<BlackboardObserver> observers = new LinkedList<>();
-    Map<String, PolarCoordinates> deltas = new HashMap<>();
-    float orientation = 0;
-    String gameId = "";
-    Location location = null;
-    Map<String, Location> locations = new HashMap<>();
-    String username = "";
-    Set<String> usernames = new HashSet<>();
+    private final BlackboardData<String> currentGameId = new BlackboardData<>("");
 
     @Override
-    public void addObserver(BlackboardObserver observer) {
-        if (observer == null)
-            throw new NullPointerException();
-        observers.add(observer);
+    public BlackboardData<String> currentGameId() {
+        return currentGameId;
     }
 
-    @Override
-    public Map<String, PolarCoordinates> getDeltas() {
-        return deltas;
-    }
+    private final BlackboardData<Map<String, PolarCoordinates>> othersDeltas = new
+            BlackboardData<Map<String, PolarCoordinates>>(new HashMap<String, PolarCoordinates>());
 
     @Override
-    public float getOrientation() {
-        return orientation;
+    public BlackboardData<Map<String, PolarCoordinates>> othersDeltas() {
+        return othersDeltas;
     }
 
-    @Override
-    public String getGameId() {
-        return gameId;
-    }
+    private final BlackboardData<Map<String, Location>> othersLocations = new
+            BlackboardData<Map<String, Location>>(new HashMap<String, Location>());
 
     @Override
-    public Location getLocation() {
-        return location;
+    public BlackboardData<Map<String, Location>> othersLocations() {
+        return othersLocations;
     }
 
-    @Override
-    public Map<String, Location> getLocations() {
-        return locations;
-    }
+    private final BlackboardData<Set<String>> othersNames = new
+            BlackboardData<Set<String>>(new HashSet<String>());
 
     @Override
-    public String getUsername() {
-        return username;
+    public BlackboardData<Set<String>> othersNames() {
+        return othersNames;
     }
 
-    @Override
-    public Set<String> getUsernames() {
-        return usernames;
-    }
+    private final BlackboardData<Location> userLocation = new BlackboardData<>(null);
 
     @Override
-    public void removeObserver(BlackboardObserver observer) {
-        if (observer == null)
-            throw new NullPointerException();
-        observers.remove(observer);
+    public BlackboardData<Location> userLocation() {
+        return userLocation;
     }
 
-    @Override
-    public void setDeltas(Map<String, PolarCoordinates> deltas) {
-        if (deltas == null)
-            this.deltas = new HashMap<>();
-        else
-            this.deltas = new HashMap<>(deltas);
-        notifyObservers();
-    }
+    private final BlackboardData<String> userName = new BlackboardData<>("");
 
     @Override
-    public void setOrientation(float orientation) {
-        this.orientation = orientation;
-        notifyObservers();
+    public BlackboardData<String> userName() {
+        return userName;
     }
 
-    @Override
-    public void setGameId(String id) {
-        if (id == null)
-            throw new NullPointerException();
-        gameId = id;
-        notifyObservers();
-    }
+    private final BlackboardData<Float> userOrientation = new BlackboardData<>(0f);
 
     @Override
-    public void setLocation(Location location) {
-        this.location = location;
-        notifyObservers();
-    }
-
-    @Override
-    public void setLocations(Map<String, Location> locations) {
-        if (locations == null)
-            this.locations = new HashMap<>();
-        else
-            this.locations = new HashMap<>(locations);
-        notifyObservers();
-    }
-
-    @Override
-    public void setUsername(String username) {
-        if (username == null)
-            throw new NullPointerException();
-        this.username = username;
-        notifyObservers();
-    }
-
-    @Override
-    public void setUsernames(Set<String> usernames) {
-        if (usernames == null)
-            this.usernames = new HashSet<>();
-        else
-            this.usernames = new HashSet<>(usernames);
-        notifyObservers();
-    }
-
-    @Override
-    public void notifyObservers() {
-        for (BlackboardObserver observer : observers)
-            observer.onUpdate(this);
+    public BlackboardData<Float> userOrientation() {
+        return userOrientation;
     }
 
 }
