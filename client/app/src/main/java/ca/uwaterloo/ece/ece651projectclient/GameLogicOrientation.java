@@ -34,6 +34,7 @@ public class GameLogicOrientation {
 
     //variables for orientation sensor
     private float orientation;
+    private float neworientation;
     private SensorManager mSensorManager;
     private Sensor accelerometer; // accelerate sensor
     private Sensor magnetic; // magnetic sensor
@@ -83,9 +84,12 @@ public class GameLogicOrientation {
         SensorManager.getRotationMatrix(R, null, accelerometerValues,
                 magneticFieldValues);
         SensorManager.getOrientation(R, values);
-        orientation = (float) Math.toDegrees(values[0]);
-        Log.i("orientation", "orientation: " + orientation);
-        updateOrientation();
+        neworientation = (float) Math.toDegrees(values[0]);
+        if(Math.abs(neworientation-orientation)>=1) {
+            updateOrientation();
+            Log.d("orientation", "orientation: " + orientation);
+        }
+        orientation = neworientation;
     }
 
 
@@ -94,7 +98,7 @@ public class GameLogicOrientation {
      * */
     public void updateOrientation() {
 
-        blackboard.userOrientation().set(orientation);
+        blackboard.userOrientation().set(neworientation);
     }
 
     /**
