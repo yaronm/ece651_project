@@ -63,6 +63,8 @@ class GameLogicLocation {
         this.userContext = userContext;
         this.blackboard = blackboard;
         userName = blackboard.userName().value();
+        getOurLocation();
+        readOtherLocation();
     }
 
     /**
@@ -87,6 +89,7 @@ class GameLogicLocation {
         try {
             location = locationManager.getLastKnownLocation(provider);
             locationManager.requestLocationUpdates(provider, 5000, 1, locationListener);
+            updateLocation();
         }
         catch(SecurityException e)
         {
@@ -158,6 +161,7 @@ class GameLogicLocation {
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
+            updateLocation();
         Log.d("location","latitude is: "+location.getLatitude()+"longitude is: "+location.getLongitude());
         }
 

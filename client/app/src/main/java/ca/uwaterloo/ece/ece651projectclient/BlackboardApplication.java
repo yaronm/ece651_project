@@ -11,6 +11,8 @@ public class BlackboardApplication extends Application {
     public void onCreate(){
         super.onCreate();
         blackboard = new ConcreteBlackboard();
+        GameLogicLocation gLLocation = new GameLogicLocation(this, blackboard);
+        GameLogicOrientation gLOrientation = new GameLogicOrientation(this, blackboard);
     }
 
     private Blackboard blackboard;

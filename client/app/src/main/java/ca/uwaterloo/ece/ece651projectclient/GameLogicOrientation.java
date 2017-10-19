@@ -47,6 +47,7 @@ public class GameLogicOrientation {
     public GameLogicOrientation(Context userContext, Blackboard blackboard) {
         this.userContext = userContext;
         this.blackboard = blackboard;
+        setOrientation();
     }
 
 
@@ -68,6 +69,7 @@ public class GameLogicOrientation {
                 accelerometer, Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(new MySensorEventListener(), magnetic,
                 Sensor.TYPE_MAGNETIC_FIELD);
+        calculateOrientation();
     }
 
     /**
@@ -83,6 +85,7 @@ public class GameLogicOrientation {
         SensorManager.getOrientation(R, values);
         orientation = (float) Math.toDegrees(values[0]);
         Log.i("orientation", "orientation: " + orientation);
+        updateOrientation();
     }
 
 
