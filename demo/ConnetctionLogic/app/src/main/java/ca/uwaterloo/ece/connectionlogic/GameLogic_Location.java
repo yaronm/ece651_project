@@ -15,50 +15,50 @@ package ca.uwaterloo.ece.connectionlogic;
  * @param Activity current_activity
  * @param Blackboard blackboard
  * @param String username
- * <p>
- * <p>
+ *
+ *
  * Methods:
  * 1. void getOurLocation(); //start location service
  * This method can start monitor changes of user location
  * Create a instance of location manager and location listener;
- * <p>
+ *
  * 2. void updateLocation(); //update our location
  * Update location of user to the blackboard;
- * <p>
+ *
  * 3. void readOtherLocation(); //download other locations, compute deltas and update
  * Monitor and read other users locations from blackboard
  * Call computeDeltas(); to compute deltas
  * Update deltas to the blackboard;
+ *
+ * 4.deleteListener();
+ * close listener service;
  */
 
 import android.content.Context;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
+
 public class GameLogicLocation {
+
+    //variables for initialization
     private Blackboard blackboard;
     private Context userContext;
+    private String userName;
+
+    //variables for location
     private LocationManager locationManager;
     private String provider;
     private Location location;
-    private float orientation;
-    private String userName;
-
 
     //set parameters
-
     /**
      * This is constructor of class ConnectionLogic
      * */
@@ -89,27 +89,7 @@ public class GameLogicLocation {
         //check whether program has permission to access GSP
         try {
             location = locationManager.getLastKnownLocation(provider);
-            locationManager.requestLocationUpdates(provider, 5000, 1, new LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-
-                }
-
-                @Override
-                public void onStatusChanged(String provider, int status, Bundle extras) {
-
-                }
-
-                @Override
-                public void onProviderEnabled(String provider) {
-
-                }
-
-                @Override
-                public void onProviderDisabled(String provider) {
-
-                }
-            });
+            locationManager.requestLocationUpdates(provider, 5000, 1, locationListener);
         }
         catch(SecurityException e)
         {
@@ -171,27 +151,32 @@ public class GameLogicLocation {
     }
 
     /**
-     * update direction
-     * */
-    public void updateOrientation() {
-
-        /**
-         * get device direction by using sensor
-         */
-        private SensorEventListener OrientSensorListener=new SensorEventListener(){
-
-            public void onAccuracyChanged(Sensor sensor, int accuracy){
-
-            }
-            public void onSensorChanged(int sensor, float[]values) {
-                // TODO Auto-generated method stub
-                    orientation = values[0];
-            }
-        };
-
-        blackboard.userOrientation().set(orientation);
+     * delete Listener
+     */
+    public void deleteListener() {
+        locationManager.removeUpdates(locationListener);
     }
 
 
-}
+    LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
 
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
+}
