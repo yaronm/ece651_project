@@ -43,7 +43,7 @@ import java.util.Observable;
 import java.util.Observer;
 
 
-public class GameLogicLocation {
+class GameLogicLocation {
 
     //variables for initialization
     private Blackboard blackboard;
