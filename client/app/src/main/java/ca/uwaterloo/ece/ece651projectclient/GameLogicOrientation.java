@@ -26,7 +26,7 @@ import android.util.Log;
  * close listener service;
  */
 
-public class GameLogic_Orientation {
+public class GameLogicOrientation {
 
     //variables for initialization
     private Blackboard blackboard;
@@ -44,7 +44,7 @@ public class GameLogic_Orientation {
     /**
      * This is constructor of class ConnectionLogic
      * */
-    public GameLogic_Orientation(Context userContext, Blackboard blackboard) {
+    public GameLogicOrientation(Context userContext, Blackboard blackboard) {
         this.userContext = userContext;
         this.blackboard = blackboard;
     }
