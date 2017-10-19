@@ -1,5 +1,4 @@
-package ca.uwaterloo.ece.connectionlogic;
-
+package ca.uwaterloo.ece.ece651projectclient;
 /**
  * This class is for connection logic.
  * a. Get user location and orientation to update
@@ -125,14 +124,14 @@ public class GameLogicLocation {
 
         // recompute the deltas
 
-        float distance=10.221f;
+        float distance;
         float bearing;
         Location one_person_location;
         for (String otherName : othersLocations.keySet()) {
             one_person_location=othersLocations.get(otherName);
             distance = location. distanceTo(one_person_location);
             bearing = location. bearingTo(one_person_location);
-            othersDeltas.put(otherName, new PolarCoordinates(distance, bearing);
+            othersDeltas.put(otherName, new PolarCoordinates(distance, bearing));
         }
         // update the blackboard with those new deltas
         Log.i("location", "Updated othersDeltas blackboard field");

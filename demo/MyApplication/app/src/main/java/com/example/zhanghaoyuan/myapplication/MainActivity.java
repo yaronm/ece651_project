@@ -15,9 +15,7 @@ import java.util.List;
 public class MainActivity extends Activity {
 
     private TextView positionTextView;
-
     private LocationManager locationManager;
-
     private String provider;
 
     @Override
@@ -25,9 +23,11 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         positionTextView = (TextView) findViewById(R.id.position_text_view);
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        /*List<String> providerList = locationManager.getProviders(true);
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        List<String> providerList = locationManager.getProviders(true);
+
         if (providerList.contains(LocationManager.GPS_PROVIDER)){
             provider = LocationManager.GPS_PROVIDER;
         }else if (providerList.contains(LocationManager.NETWORK_PROVIDER)){
@@ -35,14 +35,17 @@ public class MainActivity extends Activity {
         }else {
             Toast.makeText(this, "No location provider to use", Toast.LENGTH_SHORT).show();
             return;
-        }*/
-        provider = LocationManager.NETWORK_PROVIDER;
+        }
+
+
+
         Location location = locationManager.getLastKnownLocation(provider);
+
         if (location != null){
             showLocation(location);
         }
 
-        locationManager.requestLocationUpdates(provider, 5000, 1, locationListener);
+        locationManager.requestLocationUpdates(provider, 1, 1, locationListener);
     }
 
     protected void onDestroy(){
@@ -55,7 +58,7 @@ public class MainActivity extends Activity {
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-
+            showLocation(location);
         }
 
         @Override
@@ -75,10 +78,12 @@ public class MainActivity extends Activity {
     };
 
     private void showLocation(Location location){
+        Log.d("location","show");
         String currentPosition = "latitude is "+ location.getLatitude() + "\n" + "longitude is "
                 +location.getLongitude();
         positionTextView.setText(currentPosition);
-
+        Log.d("location","latitude is "+ location.getLatitude() + "\n" + "longitude is "
+                +location.getLongitude());
     }
 
 }
