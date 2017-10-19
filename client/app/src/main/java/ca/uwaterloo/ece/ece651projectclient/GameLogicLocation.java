@@ -57,7 +57,7 @@ class GameLogicLocation {
 
     //set parameters
     /**
-     * This is constructor of class ConnectionLogic
+     * This is constructor of class GameLogicLocation
      * */
     public GameLogicLocation(Context userContext, Blackboard blackboard) {
         this.userContext = userContext;

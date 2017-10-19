@@ -42,7 +42,7 @@ public class GameLogicOrientation {
 
     //set parameters
     /**
-     * This is constructor of class ConnectionLogic
+     * This is constructor of class GameLogicOrientation
      * */
     public GameLogicOrientation(Context userContext, Blackboard blackboard) {
         this.userContext = userContext;
