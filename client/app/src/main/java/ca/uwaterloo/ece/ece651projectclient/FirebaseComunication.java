@@ -27,13 +27,17 @@ import java.util.Set;
 public class FirebaseComunication {
     private DatabaseReference mDatabase;
     private String userId;
-    private ConcreteBlackboard bb;
+    private Blackboard bb;
     private ArrayList<ValueEventListener> listeners;
+    private ValueEventListener userlistener;
+
 
     public FirebaseComunication(ConcreteBlackboard bb){
         //user name must exist before this can be created
         this.bb = bb;
         listeners = new ArrayList<>();
+        userlistener = null;
+
         // get access to the Firebase database
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
@@ -42,17 +46,7 @@ public class FirebaseComunication {
             @Override
             public void update(Observable observable, Object o) {
                 createUser();
-                mDatabase.child("users").child(userId).child("games").addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        join_game((String)dataSnapshot.getValue());
-                    }
 
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        //do nothing
-                    }
-                });
 
             }
         });
@@ -66,8 +60,15 @@ public class FirebaseComunication {
 
     }
 
+    protected void deleteUser(){
+        if (userlistener != null){
+            mDatabase.child("users").child(userId).child("games").removeEventListener(userlistener);
+            userlistener = null;
+        }
+    }
+
     protected void createUser(){ //to be changed when change to implementation with authentication
-        MessageDigest md;
+        /*MessageDigest md;
         userId = ""; //to be changed when get blackboard interface
         try {
             md = MessageDigest.getInstance("SHA");
@@ -79,7 +80,11 @@ public class FirebaseComunication {
             userId = hexString.toString();
         }catch (java.security.NoSuchAlgorithmException e) {
             e.printStackTrace();
+        }*/
+        if (userlistener != null){
+            mDatabase.child("users").child(userId).child("games").removeEventListener(userlistener);
         }
+        userId = bb.userName().value();
 
         if (!userId.equals("")) {
             ArrayList<Double> loc= new ArrayList<>();
@@ -92,6 +97,18 @@ public class FirebaseComunication {
             //mDatabase.child("users").child(userId).child("tags").setValue(0);
             mDatabase.child("users").child(userId).child("games").setValue("none");
         }
+
+        userlistener = mDatabase.child("users").child(userId).child("games").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                join_game((String)dataSnapshot.getValue());
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                //do nothing
+            }
+        });
     }
 
 
