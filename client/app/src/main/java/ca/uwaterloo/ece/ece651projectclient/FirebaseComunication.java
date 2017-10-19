@@ -12,8 +12,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.lang.reflect.Array;
-import java.security.MessageDigest;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -46,8 +45,6 @@ public class FirebaseComunication {
             @Override
             public void update(Observable observable, Object o) {
                 createUser();
-
-
             }
         });
         bb.userLocation().addObserver(new Observer(){
@@ -68,19 +65,7 @@ public class FirebaseComunication {
     }
 
     protected void createUser(){ //to be changed when change to implementation with authentication
-        /*MessageDigest md;
-        userId = ""; //to be changed when get blackboard interface
-        try {
-            md = MessageDigest.getInstance("SHA");
-            md.update(bb.userName().value().getBytes());
-            byte messageDigest[] = md.digest();
-            StringBuffer hexString = new StringBuffer();
-            for (int i = 0; i < messageDigest.length; i++)
-                hexString.append(Integer.toHexString(0xFF & messageDigest[i]));
-            userId = hexString.toString();
-        }catch (java.security.NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }*/
+
         if (userlistener != null){
             mDatabase.child("users").child(userId).child("games").removeEventListener(userlistener);
         }
@@ -90,12 +75,12 @@ public class FirebaseComunication {
             ArrayList<Double> loc= new ArrayList<>();
             //ArrayList<String> games = new ArrayList<String>(); use if decide to enable multiple games
             //games.add("none");
-            loc.add(bb.userLocation().value().getLatitude());
-            loc.add(bb.userLocation().value().getLongitude());
 
-            mDatabase.child("users").child(userId).child("location").setValue(loc);
+
+            mDatabase.child("users").child(userId).child("connection").setValue("connected");
             //mDatabase.child("users").child(userId).child("tags").setValue(0);
-            mDatabase.child("users").child(userId).child("games").setValue("none");
+
+            //mDatabase.child("users").child(userId).child("games").setValue("none");
         }
 
         userlistener = mDatabase.child("users").child(userId).child("games").addValueEventListener(new ValueEventListener() {
@@ -112,7 +97,7 @@ public class FirebaseComunication {
     }
 
 
-    protected void createGame(ArrayList<String> userIds, Map<String,ArrayList<String>> visibilities,
+    public void createGame(ArrayList<String> userIds, Map<String,ArrayList<String>> visibilities,
                               Map<String,Integer> initial_tags, Date end, Circle boundary){
         ArrayList<String> none_str = new ArrayList<String>();
         none_str.add("none");
@@ -171,7 +156,7 @@ public class FirebaseComunication {
     }
 
     protected void join_game(String gameId) {
-        if (bb.currentGameId().value() == "none" || !bb.currentGameId().value().equals(gameId)) {
+        if (bb.currentGameId().value() == "" || bb.currentGameId().value() == "none" || !bb.currentGameId().value().equals(gameId)) {
             mDatabase.child("games").child(gameId).child("visibility").child(userId).
                     addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
