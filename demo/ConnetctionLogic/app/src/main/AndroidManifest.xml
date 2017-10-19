@@ -2,6 +2,7 @@
 
     package="ca.uwaterloo.ece.connectionlogic">
 
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"

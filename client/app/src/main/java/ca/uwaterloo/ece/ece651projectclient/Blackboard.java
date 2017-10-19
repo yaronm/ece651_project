@@ -28,7 +28,7 @@ public interface Blackboard {
     public BlackboardData<Map<String, Location>> othersLocations();
 
     /**
-     * @return the set of all other users in the current game, represented by their usernames
+     * @return the set of all other users in the current game, represented by their username
      */
     public BlackboardData<Set<String>> othersNames();
 
