@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">ECE651 Project Client</string>
+    <string name="No_userLocation">There is no data for userLocation</string>
+    <string name="No_othersDeltaLocation">There is no data for othersDelta</string>
+    <string name="No_gameId">There is no data for currentGameId</string>
+    <string name="No_userName">There is no data for userName</string>
+    <string name="No_userOrientation">There is no data for userOrientation</string>
+    <string name="No_othersNames">There is no data for othersNames</string>
+    <string name="No_othersLocation">There is no data for othersLocation</string>
+    <string name="Deltas">Deltas: </string>
 </resources>
