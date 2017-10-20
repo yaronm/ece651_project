@@ -85,7 +85,7 @@ public class GameLogicOrientation {
                 magneticFieldValues);
         SensorManager.getOrientation(R, values);
         neworientation = (float) Math.toDegrees(values[0]);
-        if(Math.abs(neworientation-orientation)>=1) {
+        if(Math.abs(neworientation-orientation)>=5) {
             updateOrientation();
             Log.d("orientation", "orientation: " + orientation);
         }
