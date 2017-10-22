@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
@@ -50,7 +51,7 @@ public class FirebaseComunication {
         bb.userLocation().addObserver(new Observer(){
             @Override
             public void update(Observable observable, Object o) {
-                New_location();
+                newLocation();
             }
         });
 
@@ -147,12 +148,24 @@ public class FirebaseComunication {
         // probably use cloud messaging for this
         join_game(game.getKey());
     }
-    //write function that reacts to blackboard state change
-    protected void New_location(){
-        ArrayList<Double> loc = new ArrayList<Double>();
-        loc.add(bb.userLocation().value().getLatitude());
-        loc.add(bb.userLocation().value().getLongitude());
-        mDatabase.child("users").child(userId).child("location").setValue(loc);
+
+    /**
+     * Uploads user name and location from the local blackboard to the Firebase server. If either
+     * user name or location is null, this method does nothing.
+     */
+    protected void newLocation() {
+        // get the most up-to-date user name and location directly from the blackboard
+        String userName = bb.userName().value();
+        Location userLocation = bb.userLocation().value();
+        // check that both user name and location are non-null
+        if (userName != null && userLocation != null) {
+            // construct location latitude/longitude pair for server upload
+            List<Double> location = new ArrayList<>();
+            location.add(userLocation.getLatitude());
+            location.add(userLocation.getLongitude());
+            // send the updated location to the server
+            mDatabase.child("users").child(userName).child("location").setValue(location);
+        }
     }
 
     protected void join_game(String gameId) {
