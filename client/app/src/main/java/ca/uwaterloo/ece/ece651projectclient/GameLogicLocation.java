@@ -53,7 +53,6 @@ class GameLogicLocation {
     //variables for location
     private LocationManager locationManager;
     private String provider;
-    private Location location;
 
     //set parameters
     /**
@@ -87,9 +86,8 @@ class GameLogicLocation {
 
         //check whether program has permission to access GSP
         try {
-            location = locationManager.getLastKnownLocation(provider);
+            updateLocation(locationManager.getLastKnownLocation(provider));
             locationManager.requestLocationUpdates(provider, 5000, 1, locationListener);
-            updateLocation();
         }
         catch(SecurityException e)
         {
@@ -147,9 +145,11 @@ class GameLogicLocation {
     }
 
     /**
-     * updateLocation
-     * */
-    public void updateLocation() {
+     * Updates the blackboard with the given location.
+     *
+     * @param location the location to pass to the blackboard
+     */
+    public void updateLocation(Location location) {
         // update the blackboard with  new locations
         Log.i("location", "Updated location to the blackboard field");
         blackboard.userLocation().set(location);
@@ -166,7 +166,7 @@ class GameLogicLocation {
     LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            updateLocation();
+            updateLocation(location);
         Log.d("location","latitude is: "+location.getLatitude()+"longitude is: "+location.getLongitude());
         }
 
