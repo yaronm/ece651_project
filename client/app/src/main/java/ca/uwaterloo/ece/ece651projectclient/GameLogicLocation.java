@@ -130,12 +130,17 @@ class GameLogicLocation {
         float distance;
         float bearing;
         Location one_person_location;
-        for (String otherName : othersLocations.keySet()) {
-            one_person_location=othersLocations.get(otherName);
-            distance = location. distanceTo(one_person_location);
-            bearing = location. bearingTo(one_person_location);
-            othersDeltas.put(otherName, new PolarCoordinates(distance, bearing));
-        }
+        // get the most-up-to-date user name firectly from the blackboard
+        Location userLocation = blackboard.userLocation().value();
+        // check that the user location is non-null before computing deltas; computing deltas when
+        // the user location is undefined does not make sense
+        if (userLocation != null)
+            for (String otherName : othersLocations.keySet()) {
+                one_person_location=othersLocations.get(otherName);
+                distance = userLocation. distanceTo(one_person_location);
+                bearing = userLocation. bearingTo(one_person_location);
+                othersDeltas.put(otherName, new PolarCoordinates(distance, bearing));
+            }
         // update the blackboard with those new deltas
         Log.i("location", "Updated othersDeltas blackboard field");
         blackboard.othersDeltas().set(othersDeltas);
