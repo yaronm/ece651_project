@@ -3,7 +3,6 @@ package ca.uwaterloo.ece.ece651projectclient;
 import android.location.Location;
 import android.util.Log;
 
-import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -14,9 +13,9 @@ import java.util.Map;
 /**
  * Created by yy on 2017-10-18.
  */
-public class FirebaseComunicationTest {
+public class FirebaseCommunicationTest {
     private ConcreteBlackboard blackboard;
-    public FirebaseComunication fb;
+    public FirebaseCommunication fb;
 
     @Test
     public void createGame() throws Exception {
@@ -28,7 +27,7 @@ public class FirebaseComunicationTest {
         loc.setLatitude(-0.193805);
         loc.setLongitude(-78.467102);
         blackboard.userLocation().set(loc);
-        fb = new FirebaseComunication(blackboard);
+        fb = new FirebaseCommunication(blackboard);
 
 
         ArrayList<String> userIds = new ArrayList<>();

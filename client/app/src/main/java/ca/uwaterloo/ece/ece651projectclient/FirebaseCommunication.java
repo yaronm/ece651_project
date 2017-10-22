@@ -24,7 +24,7 @@ import java.util.Observer;
 import java.util.Random;
 import java.util.Set;
 
-public class FirebaseComunication {
+public class FirebaseCommunication {
     private DatabaseReference mDatabase;
     private String userId;
     private Blackboard bb;
@@ -32,7 +32,7 @@ public class FirebaseComunication {
     private ValueEventListener userlistener;
 
 
-    public FirebaseComunication(ConcreteBlackboard bb){
+    public FirebaseCommunication(ConcreteBlackboard bb){
         //user name must exist before this can be created
         this.bb = bb;
         listeners = new ArrayList<>();
