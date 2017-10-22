@@ -110,6 +110,15 @@ class GameLogicLocation {
                 computeDeltas();
             }
         });
+        // also observe the blackboard for changes to the user location and also recompute deltas
+        // when it changes
+        blackboard.userLocation().addObserver(new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                Log.i("location", "Observed that userLocation blackboard field has been updated");
+                computeDeltas();
+            }
+        });
     }
 
     /**
