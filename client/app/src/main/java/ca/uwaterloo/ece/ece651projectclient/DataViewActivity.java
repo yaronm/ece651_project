@@ -1,10 +1,8 @@
 package ca.uwaterloo.ece.ece651projectclient;
 
 import android.location.Location;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
-import android.widget.EditText;
+import android.support.v7.app.AppCompatActivity;
 import android.widget.TextView;
 
 import java.util.Map;
@@ -18,139 +16,134 @@ public class DataViewActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_data_view);
+
         application = (BlackboardApplication) getApplication();
 
-        Observer dis_loc = new Observer() {
+        Observer userNameObserver = new Observer() {
             @Override
             public void update(Observable o, Object arg) {
-                //To display location
-                TextView toDisplayLocation = (TextView) findViewById(R.id.displayLocation);
-                if (application.getBlackboard().userLocation().value() == null) {
-                    toDisplayLocation.setText(getString(R.string.No_userLocation));
+                TextView displayUserName = (TextView) findViewById(R.id.displayUserName);
+                String userName = application.getBlackboard().userName().value();
+                if (userName == null) {
+                    displayUserName.setText("null");
                 } else {
-                    toDisplayLocation.setText(application.getBlackboard().userLocation().value().toString());
+                    displayUserName.setText(userName.toString());
                 }
             }
         };
+        userNameObserver.update(null, null);
+        application.getBlackboard().userName().addObserver(userNameObserver);
 
-        dis_loc.update(null, null);
-
-        application.getBlackboard().userLocation().addObserver(dis_loc);
-
-        Observer other_deltas = new Observer() {
+        Observer userLocationObserver = new Observer() {
             @Override
             public void update(Observable o, Object arg) {
-                // get the other players deltas from the blackboard
-                Map<String, PolarCoordinates> othersDeltas = application.getBlackboard().othersDeltas().value();
-                // display each one
-                TextView toDisplayDeltas = (TextView) findViewById(R.id.displayDeltas);
-                if (application.getBlackboard().othersDeltas().value() == null) {
-                    toDisplayDeltas.setText(getString(R.string.No_othersDeltaLocation));
+                TextView displayUserLocation = (TextView) findViewById(R.id.displayUserLocation);
+                Location userLocation = application.getBlackboard().userLocation().value();
+                if (userLocation == null) {
+                    displayUserLocation.setText("null");
                 } else {
-                    toDisplayDeltas.setText(getString(R.string.Deltas));
-                    for (String userName : othersDeltas.keySet()) {
-                        PolarCoordinates polarCoordinates = othersDeltas.get(userName);
-                        toDisplayDeltas.append("\n  " + userName + ": " + polarCoordinates.getRho() + ", " + polarCoordinates.getPhi());
+                    displayUserLocation.setText(userLocation.getLatitude() + ", " +
+                            userLocation.getLongitude());
+                }
+            }
+        };
+        userLocationObserver.update(null, null);
+        application.getBlackboard().userLocation().addObserver(userLocationObserver);
+
+        Observer userOrientationObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                TextView displayUserOrientation =
+                        (TextView) findViewById(R.id.displayUserOrientation);
+                Float userOrientation = application.getBlackboard().userOrientation().value();
+                if (userOrientation == null) {
+                    displayUserOrientation.setText("null");
+                } else {
+                    displayUserOrientation.setText(userOrientation.toString());
+                }
+            }
+        };
+        userOrientationObserver.update(null, null);
+        application.getBlackboard().userOrientation().addObserver(userOrientationObserver);
+
+        Observer currentGameIdObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                TextView displayCurrentGameId = (TextView) findViewById(R.id.displayCurrentGameId);
+                String currentGameId = application.getBlackboard().currentGameId().value();
+                if (currentGameId == null) {
+                    displayCurrentGameId.setText("null");
+                } else {
+                    displayCurrentGameId.setText(currentGameId);
+                }
+            }
+        };
+        currentGameIdObserver.update(null, null);
+        application.getBlackboard().currentGameId().addObserver(currentGameIdObserver);
+
+        Observer othersNamesObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                TextView displayOthersNames = (TextView) findViewById(R.id.displayOthersNames);
+                Set<String> othersNames = application.getBlackboard().othersNames().value();
+                if (othersNames == null) {
+                    displayOthersNames.setText("null");
+                } else if (othersNames.isEmpty()) {
+                    displayOthersNames.setText("empty");
+                } else {
+                    displayOthersNames.setText("");
+                    for (String name : othersNames)
+                        displayOthersNames.append("\n" + name);
+                }
+            }
+        };
+        othersNamesObserver.update(null, null);
+        application.getBlackboard().othersNames().addObserver(othersNamesObserver);
+
+        Observer othersLocationsObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                TextView displayOthersLocations =
+                        (TextView) findViewById(R.id.displayOthersLocations);
+                Map<String, Location> othersLocations =
+                        application.getBlackboard().othersLocations().value();
+                if (othersLocations == null) {
+                    displayOthersLocations.setText("null");
+                } else if (othersLocations.isEmpty()) {
+                    displayOthersLocations.setText("empty");
+                } else {
+                    displayOthersLocations.setText("");
+                    for (String name : othersLocations.keySet()) {
+                        double latitude = othersLocations.get(name).getLatitude();
+                        double longitude = othersLocations.get(name).getLongitude();
+                        displayOthersLocations.append("\n" + name + ": " +
+                                latitude + ", " + longitude);
                     }
                 }
             }
         };
+        othersLocationsObserver.update(null, null);
+        application.getBlackboard().othersLocations().addObserver(othersLocationsObserver);
 
-        other_deltas.update(null, null);
-
-        application.getBlackboard().othersDeltas().addObserver(other_deltas);
-
-        Observer dis_gameId = new Observer() {
+        Observer othersDeltasObserver = new Observer() {
             @Override
             public void update(Observable o, Object arg) {
-                //To display GameId
-                TextView toDisplayGameId = (TextView) findViewById(R.id.displayGameId);
-                if (application.getBlackboard().othersDeltas().value() == null) {
-                    toDisplayGameId.setText(getString(R.string.No_gameId));
+                TextView displayOthersDeltas = (TextView) findViewById(R.id.displayOthersDeltas);
+                Map<String, PolarCoordinates> othersDeltas =
+                        application.getBlackboard().othersDeltas().value();
+                if (othersDeltas == null) {
+                    displayOthersDeltas.setText("null");
+                } else if (othersDeltas.isEmpty()) {
+                    displayOthersDeltas.setText("empty");
                 } else {
-                    toDisplayGameId.setText(application.getBlackboard().currentGameId().value().toString());
+                    displayOthersDeltas.setText("");
+                    for (String name : othersDeltas.keySet())
+                        displayOthersDeltas.append("\n" + name + ": " + othersDeltas.get(name));
                 }
             }
         };
-
-        dis_gameId.update(null, null);
-
-        application.getBlackboard().currentGameId().addObserver(dis_gameId);
-
-        Observer dis_userName = new Observer() {
-            @Override
-            public void update(Observable o, Object arg) {
-                //To display userName
-                TextView toDisplayUserName = (TextView) findViewById(R.id.displayUserName);
-                if (application.getBlackboard().userName().value() == null) {
-                    toDisplayUserName.setText(getString(R.string.No_userName));
-                } else {
-                    toDisplayUserName.setText(application.getBlackboard().userName().value().toString());
-                }
-            }
-        };
-
-        dis_userName.update(null, null);
-
-        application.getBlackboard().userName().addObserver(dis_userName);
-
-        Observer dis_orientation = new Observer() {
-            @Override
-            public void update(Observable o, Object arg) {
-                //To display user orientation
-                TextView toDisplayOrientation = (TextView) findViewById(R.id.displayOrientation);
-                if (application.getBlackboard().userOrientation().value() == null) {
-                    toDisplayOrientation.setText(getString(R.string.No_userOrientation));
-                } else {
-                    toDisplayOrientation.setText(application.getBlackboard().userOrientation().value().toString());
-                }
-            }
-        };
-
-        dis_orientation.update(null, null);
-
-        application.getBlackboard().userOrientation().addObserver(dis_orientation);
-
-        Observer others_names = new Observer() {
-            @Override
-            public void update(Observable o, Object arg) {
-                // get the other players names from the blackboard
-                Set<String> othersNames = application.getBlackboard().othersNames().value();
-                // display each one
-                TextView toDisplayOthersNames = (TextView) findViewById(R.id.displayOthersNames);
-                if (application.getBlackboard().othersNames().value() == null) {
-                    toDisplayOthersNames.setText(getString(R.string.No_othersNames));
-                } else {
-                    for (String userName : othersNames)
-                        toDisplayOthersNames.append("\n  " + userName);
-                }
-            }
-        };
-
-        others_names.update(null, null);
-
-        application.getBlackboard().othersNames().addObserver(others_names);
-
-        Observer others_location = new Observer() {
-            @Override
-            public void update(Observable o, Object arg) {
-                // get the other players location from the blackboard
-                Map<String, Location> others_location = application.getBlackboard().othersLocations().value();
-                // display each one
-                TextView toDisplayOtherLocation = (TextView) findViewById(R.id.displayOthersLocation);
-                if (application.getBlackboard().othersLocations().value() == null) {
-                    toDisplayOtherLocation.setText(getString(R.string.No_othersLocation));
-                } else {
-                    for (String userName : others_location.keySet())
-                        toDisplayOtherLocation.append("\n  " + userName);
-                }
-            }
-        };
-
-        others_location.update(null, null);
-
-        application.getBlackboard().othersLocations().addObserver(others_location);
-
+        othersDeltasObserver.update(null, null);
+        application.getBlackboard().othersDeltas().addObserver(othersDeltasObserver);
     }
 
     BlackboardApplication application = new BlackboardApplication();

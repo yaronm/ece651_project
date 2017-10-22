@@ -52,4 +52,9 @@ public class PolarCoordinates {
         this.phi = phi;
     }
 
+    @Override
+    public String toString() {
+        return getRho() + ", " + getPhi();
+    }
+
 }
