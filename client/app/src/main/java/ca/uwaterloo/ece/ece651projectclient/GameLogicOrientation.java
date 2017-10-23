@@ -88,8 +88,9 @@ public class GameLogicOrientation {
         if(Math.abs(neworientation-orientation)>=5) {
             updateOrientation();
             Log.d("orientation", "orientation: " + orientation);
+            // only update the old orientation when a new one is updated to the blackboard
+            orientation = neworientation;
         }
-        orientation = neworientation;
     }
 
 
