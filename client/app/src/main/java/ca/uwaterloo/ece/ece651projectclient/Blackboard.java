@@ -17,6 +17,18 @@ public interface Blackboard {
     public BlackboardData<String> currentGameId();
 
     /**
+     * @return the state of the game.
+     */
+    public BlackboardData<GameState> gameState();
+
+    /**
+     * @return the number of players in the current game; values greater than
+     * <code>{@link #othersNames()}.value().size() + 1</code> indicate open player slots in the
+     * current game that have not yet been filled
+     */
+    public BlackboardData<Integer> numberOfPlayers();
+
+    /**
      * @return the distance and bearing to each other user in the current game, indexed by
      *         username; bearings are represented in degrees East of true North
      */
@@ -46,5 +58,15 @@ public interface Blackboard {
      * @return the orientation of the user; represented in degrees East of true North
      */
     public BlackboardData<Float> userOrientation();
+
+    /**
+     * @return the visibility matrix of the current game
+     */
+    public BlackboardData<Map<String, Set<String>>> visibilityMatrix();
+
+    /**
+     * @return the type of the visibility matrix of the current game
+     */
+    public BlackboardData<VisibilityMatrixType> visibilityMatrixType();
 
 }

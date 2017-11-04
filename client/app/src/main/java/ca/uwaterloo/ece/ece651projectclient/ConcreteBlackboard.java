@@ -16,6 +16,21 @@ public class ConcreteBlackboard implements Blackboard {
         return currentGameId;
     }
 
+    private final BlackboardData<GameState> gameState = new
+            BlackboardData<>(GameState.UNINITIALIZED);
+
+    @Override
+    public BlackboardData<GameState> gameState() {
+        return gameState;
+    }
+
+    private final BlackboardData<Integer> numberOfPlayers = new BlackboardData<>(0);
+
+    @Override
+    public BlackboardData<Integer> numberOfPlayers() {
+        return numberOfPlayers;
+    }
+
     private final BlackboardData<Map<String, PolarCoordinates>> othersDeltas = new
             BlackboardData<Map<String, PolarCoordinates>>(new HashMap<String, PolarCoordinates>());
 
@@ -59,6 +74,21 @@ public class ConcreteBlackboard implements Blackboard {
     @Override
     public BlackboardData<Float> userOrientation() {
         return userOrientation;
+    }
+
+    private final BlackboardData<Map<String, Set<String>>> visibilityMatrix = new
+            BlackboardData<Map<String, Set<String>>>(new HashMap<String, Set<String>>());
+    @Override
+    public BlackboardData<Map<String, Set<String>>> visibilityMatrix() {
+        return visibilityMatrix;
+    }
+
+    private final BlackboardData<VisibilityMatrixType> visibilityMatrixType = new
+            BlackboardData<>(VisibilityMatrixType.CUSTOM);
+
+    @Override
+    public BlackboardData<VisibilityMatrixType> visibilityMatrixType() {
+        return visibilityMatrixType;
     }
 
 }
