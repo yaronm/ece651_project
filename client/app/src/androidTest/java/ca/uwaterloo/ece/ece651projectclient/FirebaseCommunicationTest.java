@@ -49,7 +49,7 @@ public class FirebaseCommunicationTest {
         visibilities.put("c6c7d29c4fe187d426cdab137016721518369", vis2);
         visibilities.put("fb7922595ad9c210c0f3ce773f0cc8b9d8e21f3", vis2);
         visibilities.put("40e3e87e1bba2e37a3e76e64364138a2159cac", vis2);
-        fb.createGame(userIds, visibilities, null, null, null);
+        //fb.createGame(userIds, visibilities, null, null, null);
         loc = new Location(" ");
         loc.setLatitude(0);
         loc.setLongitude(0);
