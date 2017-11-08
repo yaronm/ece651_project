@@ -36,6 +36,12 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
         application.getBlackboard().userOrientation().addObserver(observer);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        application.getBlackboard().currentActivity().set(this);
+    }
+
     BlackboardApplication application;
     SurfaceView surfaceCompass;
 

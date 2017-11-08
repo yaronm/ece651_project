@@ -1,5 +1,6 @@
 package ca.uwaterloo.ece.ece651projectclient;
 
+import android.app.Activity;
 import android.location.Location;
 
 import java.util.Map;
@@ -10,6 +11,11 @@ import java.util.Set;
  * data.
  */
 public interface Blackboard {
+
+    /**
+     * @return the currently active activity
+     */
+    public BlackboardData<Activity> currentActivity();
 
     /**
      * @return the unique identifier string of the current game
