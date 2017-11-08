@@ -3,6 +3,7 @@ package ca.uwaterloo.ece.ece651projectclient;
 import android.app.Activity;
 import android.location.Location;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -22,6 +23,13 @@ public class ConcreteBlackboard implements Blackboard {
     @Override
     public BlackboardData<String> currentGameId() {
         return currentGameId;
+    }
+
+    private final BlackboardData<Date> gameEndTime = new BlackboardData<>(null);
+
+    @Override
+    public BlackboardData<Date> gameEndTime() {
+        return gameEndTime;
     }
 
     private final BlackboardData<GameState> gameState = new
