@@ -4,33 +4,132 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="ca.uwaterloo.ece.ece651projectclient.SelectGameActivity">
+    tools:context="ca.uwaterloo.ece.ece651projectclient.SelectGameActivity"
+    tools:layout_editor_absoluteY="81dp">
 
     <EditText
         android:id="@+id/editGameId"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginBottom="36dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
         android:ems="10"
         android:hint="Game ID"
         android:inputType="textPersonName"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/buttonJoin"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/buttonPlay"
+        android:id="@+id/buttonJoin"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginTop="20dp"
-        android:onClick="onPlayClick"
-        android:text="Play"
-        app:layout_constraintHorizontal_bias="0.0"
+        android:layout_marginBottom="20dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:onClick="onJoinClick"
+        android:text="Join"
+        app:layout_constraintBottom_toTopOf="@+id/view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editGameId" />
+
+    <View
+        android:id="@+id/view"
+        android:layout_width="0dp"
+        android:layout_height="4dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:background="@android:color/black"
+        app:layout_constraintBottom_toTopOf="@+id/editNoOfPlayers"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonJoin" />
+
+    <EditText
+        android:id="@+id/editNoOfPlayers"
+        android:layout_width="0dp"
+        android:layout_height="62dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:ems="10"
+        android:hint="Enter No. of Players"
+        android:inputType="textPersonName|number"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/view" />
+
+    <Button
+        android:id="@+id/buttonCreateGame"
+        android:layout_width="352dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:onClick="onCreateGameClick"
+        android:text="Create Game"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/radioGroupSelectMatrixType"
+        app:layout_constraintStart_toEndOf="@+id/radioGroupSelectMatrixType"
+        app:layout_constraintTop_toBottomOf="@+id/radioGroupSelectMatrixType" />
+
+    <RadioGroup
+        android:id="@+id/radioGroupSelectMatrixType"
+        android:layout_width="191dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="8dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toTopOf="@+id/buttonCreateGame"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView2">
+
+        <RadioButton
+            android:id="@+id/radioTypeAssassin"
+            android:layout_width="151dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="8dp"
+            android:text="ASSASSIN"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/editText"
+            android:onClick="onClick"/>
+
+        <RadioButton
+            android:id="@+id/radioTypeHideNSeek"
+            android:layout_width="151dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="8dp"
+            android:text="HIDE_N_SEEK"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/radioTypeAssassin"
+            android:onClick="onClick"/>
+
+        <RadioButton
+            android:id="@+id/radioTypeCustom"
+            android:layout_width="151dp"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:layout_marginTop="8dp"
+            android:text="CUSTOM"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/radioTypeHideNSeek"
+            android:onClick="onClick"/>
+    </RadioGroup>
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="347dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="16dp"
+        android:text="Select Matrix Type"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.523"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editGameId" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/editNoOfPlayers" />
+
+
 </android.support.constraint.ConstraintLayout>
