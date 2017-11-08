@@ -92,6 +92,13 @@ public class ConcreteBlackboard implements Blackboard {
         return userOrientation;
     }
 
+    private final BlackboardData<String> userTaggedBy = new BlackboardData<>(null);
+
+    @Override
+    public BlackboardData<String> userTaggedBy() {
+        return userTaggedBy;
+    }
+
     private final BlackboardData<Map<String, Set<String>>> visibilityMatrix = new
             BlackboardData<Map<String, Set<String>>>(new HashMap<String, Set<String>>());
 

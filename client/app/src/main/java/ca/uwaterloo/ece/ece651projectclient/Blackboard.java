@@ -72,6 +72,11 @@ public interface Blackboard {
     public BlackboardData<Float> userOrientation();
 
     /**
+     * @return the username of the player that has tagged the game user
+     */
+    public BlackboardData<String> userTaggedBy();
+
+    /**
      * @return the visibility matrix of the current game
      */
     public BlackboardData<Map<String, Set<String>>> visibilityMatrix();
