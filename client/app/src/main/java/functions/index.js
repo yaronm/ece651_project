@@ -11,23 +11,38 @@ exports.open_game = functions.database.ref('open_games/{gameid}/').onWrite(event
    var running = event.data.child("running").val();
    var num_users = event.data.child("num_players").val();
    if (running == "false"){
-            var num_users = event.data.child("num_players").val();
-            var users = event.data.child("players").val();
+        var num_users = event.data.child("num_players").val();
+        console.log("num users:");
+        console.log(num_users);
+        var users = event.data.child("players").val();
        if (users != undefined && users != null && num_users != null && num_users != undefined){
             if (!Array.isArray(users)){
-                users = Object.values( users );
+                users = Object.keys( users ).map(function(key){
+                    return users[key];
+                });
+            }
+            console.log ("user length");
+            console.log(users.length);
+            for (var u in users){
+                console.log(users[u]);
             }
             if (users.length == num_users){
                 //make visibility matrix and set running to true, copy game key to non-open games and wait for acknowledgements from all players
                 initialize(users, event);
             }
             else if (users.length > num_users){
+                var players = event.data.child("players").val();
+                var keys = Object.keys(players).sort();
                 var to_remove = users.length - num_users;
                 for (var i = 0; i < to_remove; i++){
-                    users.pop();
-                    event.data.child("players").set(users);
+                    delete players[keys[keys.length-i-1]];
+                    
                 }
-                initialize(users, event);
+                event.data.child("players").ref.set(players);
+                var play_vals = Object.keys( players ).map(function(key){
+                    return players[key];
+                });
+                initialize(play_vals, event);
                 //kick someone out, make visibility matrix and set running to true and wait for acknowledgements from all players
             }
        }
@@ -48,6 +63,7 @@ exports.open_game = functions.database.ref('open_games/{gameid}/').onWrite(event
 
 //make visibility matrix and set running to true, copy game key to non-open games
 function initialize(users, event){
+    console.log("initialize");
     mat_style = event.data.child("visibility_matrix_style").val();
     if (mat_style == "ASSASSIN"){
         generate_assassin(users, event);
@@ -55,7 +71,7 @@ function initialize(users, event){
     else if (mat_style == "HIDE_N_SEEK"){
         generate_hide_n_seek(users,event);
     }
-    event.data.child("running").set("true");
+    event.data.child("running").ref.set("true");
     //copy game to regular games
     var game = admin.database().ref('games/');
     var gameid = event.params.gameid;
@@ -66,13 +82,24 @@ function initialize(users, event){
 }
 
 function generate_assassin(users, event){
+    console.log("generate_assassin");
     var sec = users.reduce((a,v)=>a.splice(Math.floor(Math.random() * a.length), 0, v) && a, []);
     var vis = {};
-    for (var index in sec.length){
-        vis[sec[index]] = users[index];
+    var redo = 1;
+    while (redo == 1){
+        for (var index = 0; index < sec.length; index ++){
+            if (sec[index] == users[index]){
+                sec = sec.reduce((a,v)=>a.splice(Math.floor(Math.random() * a.length), 0, v) && a, []);
+                vis = {};
+                redo = 1;
+                break;
+            }
+            vis[sec[index]] = users[index];
+            redo = 0;
+        }
     }
-    game.child("visibility").set(vis);
-    return;
+    
+    return event.data.child("visibility").ref.set(vis);;
 }
 
 function generate_hide_n_seek(users, event){
@@ -86,8 +113,8 @@ function generate_hide_n_seek(users, event){
             vis[users[i]] = ["none"];
         }
     }
-    game.child("visibility").set(vis);
-    return;
+    
+    return event.data.child("visibility").ref.set(vis);;
 }
 //create function for creating open games 
     //checks the num of players and the defined num players, when equal makes visibility matrix, and sets running to true
