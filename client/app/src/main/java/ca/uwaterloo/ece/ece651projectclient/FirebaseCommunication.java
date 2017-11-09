@@ -1,19 +1,14 @@
 package ca.uwaterloo.ece.ece651projectclient;
 
-/**
- * Created by yy on 2017-10-17.
- */
 
 import android.location.Location;
 import android.util.Log;
-
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
-
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -29,7 +24,6 @@ import java.util.Observer;
 import java.util.Random;
 import java.util.Set;
 
-import static android.R.attr.src;
 import static ca.uwaterloo.ece.ece651projectclient.GameState.JOINING;
 import static ca.uwaterloo.ece.ece651projectclient.GameState.RUNNING;
 import static ca.uwaterloo.ece.ece651projectclient.GameState.UNINITIALIZED;
@@ -44,7 +38,7 @@ public class FirebaseCommunication {
     private List<String> visible_to_me;
     private ValueEventListener user_list_listener;
     private String old_game;
-    private boolean join_custom;
+    private int join_custom;// 0 = undefined, -1 = false, 1 = true
 
     /*
     Constructor for this class. The class provides communication with the firebase server based on data
@@ -55,7 +49,7 @@ public class FirebaseCommunication {
     public FirebaseCommunication(Blackboard bb) {
         //user name must exist before this can be created
         this.bb = bb;
-        join_custom = false;
+        join_custom = 0;
         listeners = new ArrayList<>();
         visible_to_me = new ArrayList<>();
         vis_list = null;
@@ -90,14 +84,17 @@ public class FirebaseCommunication {
             }
         });
     }
-
+    
+    /*
+    checks the current game state and based on this calls the correct function
+    */
     private void gameStateReaction(){
         GameState curr_state = bb.gameState().value();
         switch(curr_state){
             case CREATING: createGame();
                 break;
             case JOINING: gameSelected();
-            default: break;
+            default: return;
         }
     }
 
@@ -108,6 +105,7 @@ public class FirebaseCommunication {
     sets up a listener on the game child of the current user
      */
     private void changeUser() { //to be changed when change to implementation with authentication
+        join_custom = 0;
         deleteUser(); //in case changing the user instead of just creating the user
         userId = bb.userName().value();//this variable allows us to delete old listeners
 
@@ -159,11 +157,11 @@ public class FirebaseCommunication {
     0.
      */
     private void createGame() {
-        VisibilityMatrixType VMat = bb.visibilityMatrixType().value();//may need to change names
+        VisibilityMatrixType VMat = bb.visibilityMatrixType().value();
         Map<String, Set<String>> visibilities = bb.visibilityMatrix().value();
-        List<String> userIds = (ArrayList<String>)bb.othersNames().value();
+        Map <String, List<String>> visibilities_to_upload = new HashMap<>();
+        List<String> userIds = new ArrayList<>(bb.othersNames().value());
         String curr_user = bb.userName().value();
-        Map<String, Integer> initial_tags = new HashMap<>();
         Date end = new Date();
         Circle boundary;
 
@@ -178,7 +176,7 @@ public class FirebaseCommunication {
             createOpenGame();
             return;
         }
-        if (visibilities == null) {// initialize the visibilities map if not initialized with random
+        if (visibilities == null || visibilities.isEmpty()) {// initialize the visibilities map if not initialized with random
             //vector.
             switch(VMat){
                 case HIDE_N_SEEK: visibilities = hideNseekVisGenerator();
@@ -189,11 +187,13 @@ public class FirebaseCommunication {
                     return;
             }
         }
-        //initialize initial tag for each user to 0
-        for (String user : userIds) {
-            initial_tags.put(user, 0);
+        bb.visibilityMatrix().set(visibilities);
+        for (String key : visibilities.keySet()){
+            List <String> vis = new ArrayList<>();
+            vis.addAll(visibilities.get(key));
+            visibilities_to_upload.put(key, vis);
         }
-
+        
 
         //initialize time limit to 1 hour from now
         end.setTime(end.getTime() + 3600000); //eventually change to use Blackboard
@@ -203,27 +203,31 @@ public class FirebaseCommunication {
 
         //create tree in database for this game with unique identifier
         DatabaseReference game = mDatabase.child("games").push();
-        game.child("users").setValue(userIds);
-        game.child("visibility").setValue(visibilities);
-        game.child("tags").setValue(initial_tags);
+
+        game.child("visibility").setValue(visibilities_to_upload);
+        //game.child("tags").setValue(initial_tags);
         game.child("end_time").setValue(end);
-        game.child("boundary_center_point").setValue(boundary.get_midpoint());
+        game.child("boundary_center_point_lat").setValue((boundary.get_midpoint()).getLatitude());
+        game.child("boundary_center_point_long").setValue((boundary.get_midpoint()).getLongitude());
         game.child("boundary_radius").setValue(boundary.get_radius());
+        
+        
+        for (String user : userIds) {
+            DatabaseReference us_ref = game.child("users").push();
+            us_ref.setValue(user);
+        }
+        
         //List <String> games = bb.associatedGames.value();
         //games.add(game.getKey());
         //bb.associatedGames.set(games);
-        DatabaseReference new_game = mDatabase.child("users").child(userId).child("games").push();
+        
         Map <String, Object> new_game_map = new HashMap<>();
-        new_game_map.put(new_game.getKey(), game.getKey());
+        new_game_map.put(game.getKey(), 1);
         mDatabase.child("users").child(userId).child("games").updateChildren(new_game_map);
         //invite other users to the game
         for (String user : userIds) {
             if (!user.equals(curr_user)) {
-                new_game = mDatabase.child("users").child(user).child("games").push();
-                new_game_map.clear();
-                new_game_map.put(new_game.getKey(), game.getKey());
                 mDatabase.child("users").child(user).child("games").updateChildren(new_game_map);
-
             }
         }
 
@@ -239,11 +243,12 @@ public class FirebaseCommunication {
         //need to do
         DatabaseReference game;
         int num_players = bb.numberOfPlayers().value();
-        List<String> userIds = (ArrayList<String>)bb.othersNames().value();
+        List<String> userIds = new ArrayList<>(bb.othersNames().value());
         String curr_user = bb.userName().value();
         //Circle boundary = bb.boundary().value();
-        VisibilityMatrixType VMat = bb.visibilityMatrixType().value();//may need to change names
+        VisibilityMatrixType VMat = bb.visibilityMatrixType().value();
 
+        
         if (num_players == 0 || VMat == null){
             bb.gameState().set(UNINITIALIZED);
             return;
@@ -256,28 +261,28 @@ public class FirebaseCommunication {
             return;
         }
 
+
         game = mDatabase.child("open_games").push();
         game.child("num_players").setValue(num_players);
-        game.child("players").setValue(userIds);
-        //game.child("boundary_center_point").setValue(boundary.get_midpoint());
-        //game.child("boundary_radius").setValue(boundary.get_radius());
-        game.child("boundary_center_point").setValue(new Location(" "));//to remove
-        game.child("boundary_radius").setValue(0);//to remove
+        for (String user : userIds) {
+            DatabaseReference us_ref = game.child("players").push();
+            us_ref.setValue(user);
+        }
+        game.child("boundary_center_point_lat").setValue(new Location(" "));//to change
+        game.child("boundary_center_point_long").setValue(new Location(" "));//to change
+        game.child("boundary_radius").setValue(0);//to change
         game.child("end_time").setValue(end);
         game.child("visibility_matrix_style").setValue(VMat.toString());
         game.child("running").setValue("false");
         Map <String, Object> game_key = new HashMap<>();
-        game_key.put(game.getKey(), "true");
+        game_key.put(game.getKey(), 1);
         for (String user: userIds){
             mDatabase.child("users").child(user).child("open_games").updateChildren(game_key);
         }
 
-        join_custom = true;
+        join_custom = 1;
         bb.currentGameId().set(game.getKey());
         bb.gameState().set(JOINING);
-
-
-        //	go to state where join the game once it running becomes true
     }
 
     /*
@@ -294,39 +299,37 @@ public class FirebaseCommunication {
             return;
         }
 
-
-
         mDatabase.child("open_games").child(game_id).addValueEventListener
                 ((new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.child("running").getValue() == null)
+                            return;
                         if (dataSnapshot.child("running").getValue().equals("false")) {
-                            Collection<Object> players = ((Map<String, Object>) dataSnapshot.child("players").getValue()).values();
+                            if (dataSnapshot.child("players").getValue() == null)
+                                return;
+                            Collection<String> players = ((Map<String, String>)dataSnapshot.child("players").getValue()).values();
                             Map<String, Object> game_key = new HashMap<>();
-                            game_key.put(game_id, "true");
-
-                            if (!players.contains(curr_user) && players.size() < (int) dataSnapshot.child("num_players").getValue()) {
-                                Map<String, Object> player_key = new HashMap<>();
-                                player_key.put(curr_user, "true");
-                                mDatabase.child("open_games").child(game_id).child("players").updateChildren(player_key);
+                            game_key.put(game_id, 1);
+                            if (!players.contains(curr_user) && players.size() < ((Long) dataSnapshot.child("num_players").getValue()).intValue()) {
+                                DatabaseReference us = mDatabase.child("open_games").child(game_id).child("players").push();
+                                us.setValue(curr_user);
                                 mDatabase.child("users").child(curr_user).child("open_games").updateChildren(game_key);
                             }
                         }else{
-                            Collection<Object> players = ((Map<String, Object>) dataSnapshot.child("players").getValue()).values();
+                            Collection<String> players = ((Map<String, String>)dataSnapshot.child("players").getValue()).values();
                             boolean added = false;
                             if (players.contains(curr_user)) {
-                                DatabaseReference new_game = mDatabase.child("users").child(curr_user).child("games").push();
                                 Map<String, Object> new_game_key = new HashMap<>();
-                                new_game_key.put(new_game.getKey(), dataSnapshot.getKey());
+                                new_game_key.put(dataSnapshot.getKey(), 1);
                                 mDatabase.child("users").child(curr_user).child("games").updateChildren(new_game_key);
                                 added = true;
                                 Map<String, Object> response = new HashMap<>();
                                 response.put(curr_user, "true");
                                 mDatabase.child("open_games").child(game_id).child("responses").updateChildren(response);
                             }
-
                             mDatabase.child("users").child(curr_user).child("open_games").child(dataSnapshot.getKey()).setValue(null);
-                            join_custom = false;
+                            join_custom = -1;
                             if (added){
                                 gameSelected();
                             }else{
@@ -348,8 +351,35 @@ public class FirebaseCommunication {
     updates the listeners based on the game that the user has selected
     */
     private void gameSelected() {
-        if (!join_custom) {
-            String curr_game = bb.currentGameId().value();
+        final String curr_game = bb.currentGameId().value();
+        if (join_custom == 0) {
+            mDatabase.child("games").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.hasChild(curr_game))
+                        join_custom = -1;
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    //do nothing
+                }
+            });
+        }
+        if (join_custom == 0){
+            mDatabase.child("open_games").addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    if (dataSnapshot.hasChild(curr_game))
+                        join_custom = 1;
+                }
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    //do nothing
+                }
+            });
+        }
+        if (join_custom == -1) {
             if (old_game != null && !old_game.equals("none") && old_game.equals("")) {
                 if (user_list_listener != null) {
                     mDatabase.child("games").child(old_game).child("users").removeEventListener(user_list_listener);
@@ -372,7 +402,7 @@ public class FirebaseCommunication {
     */
     private Map<String, Set<String>> hideNseekVisGenerator(){
         Map<String, Set<String>> visibilities = new HashMap<>();
-        List<String> userIds = (ArrayList<String>)bb.othersNames().value();
+        List<String> userIds = new ArrayList<>(bb.othersNames().value());
         Set<String> none_str = new HashSet<>();
 
         userIds.add(bb.userName().value());
@@ -384,7 +414,7 @@ public class FirebaseCommunication {
                 visibilities.put(userIds.get(i), none_str);//hider
             } else {
                 Set<String> vis = new HashSet<>((List<String>)(((ArrayList<String>) userIds).clone()));
-                vis.remove(j);//can't see self
+                vis.remove(userIds.get(j));//can't see self
                 visibilities.put(userIds.get(j), vis);//seeker
             }
         }
@@ -398,14 +428,22 @@ public class FirebaseCommunication {
     */
     private Map<String, Set<String>> AssassinVisGenerator(){
         Map<String, Set<String>> visibilities = new HashMap<>();
-        List<String> userIds = (ArrayList<String>)bb.othersNames().value();
+        List<String> userIds = new ArrayList<>(bb.othersNames().value());
         userIds.add(bb.userName().value());
         List<String> targets = (List<String>)(((ArrayList<String>)userIds).clone());
         Collections.shuffle(targets);
-        for (int i = 0; i < userIds.size(); i++) {
+        int i = 0;
+        while (i < userIds.size()) {
+            if (targets.get(i) == userIds.get(i)){
+                Collections.shuffle(targets);
+                i = 0;
+                visibilities.clear();
+                continue;
+            }
             Set<String> vis_list = new HashSet<>();
             vis_list.add(targets.get(i));
             visibilities.put(userIds.get(i), vis_list);
+            i++;
         }
         return visibilities;
     }
@@ -422,8 +460,11 @@ public class FirebaseCommunication {
                     ((new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
-                            List<String> vis = (ArrayList<String>) dataSnapshot.getValue();
-                            Set vis_set = new HashSet();
+                            Collection<String> vis = ((Map<String, String>) dataSnapshot.getValue()).values();
+                            if (vis == null){
+                                return;
+                            }
+                            Set <String> vis_set = new HashSet();
                             vis_set.addAll(vis);
                             vis_set.remove(userId);
                             bb.othersNames().set(vis_set);
@@ -434,17 +475,23 @@ public class FirebaseCommunication {
                             //do nothing
                         }
                     }));
-            vis_list = mDatabase.child("games").child(curr_game).child("visibility").child(userId).
+            vis_list = mDatabase.child("games").child(curr_game).child("visibility").
                     addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
-                            List<String> vis = (ArrayList<String>) dataSnapshot.getValue();
+                            Map<String, ArrayList<String>> vis_mat = (HashMap<String, ArrayList<String>>)(dataSnapshot.getValue());
+                            List<String> vis = vis_mat.get(userId);
                             if (vis != null && !vis.get(0).equals("none")) {//only do this if can see someone
                                 visible_to_me.addAll(vis);
 
                                 remove_location_listeners();//clean locations listening to since our
                                 //visibility matrix has changed and replace with new listeners
                                 setup_location_listeners();
+                            }
+                            Map<String, Set<String>> vis_to_add = new HashMap<>();
+                            for (String k :vis_mat.keySet()){
+                                Set <String> visibilties = new HashSet<>(vis_mat.get(k));
+                                vis_to_add.put(k, visibilties);
                             }
                         }
 
@@ -453,13 +500,15 @@ public class FirebaseCommunication {
                             //do nothing
                         }
                     });
-            bb.gameState().set(RUNNING);
+
         }
+        if (!(bb.othersNames().value().isEmpty()) && !(bb.visibilityMatrix().value().isEmpty()))
+            bb.gameState().set(RUNNING);
     }
 
     /*
-creates a listener on the locations of all users we can see
- */
+    creates a listener on the locations of all users we can see
+    */
     private void setup_location_listeners() {
         for (String Wat : visible_to_me) {
             Map<String, ValueEventListener> curr = new HashMap<>();
@@ -468,6 +517,8 @@ creates a listener on the locations of all users we can see
                 public void onDataChange(DataSnapshot dataSnapshot) {
                     Location loc_obj = new Location(" ");
                     List<Double> loc_data = null;
+                    if (dataSnapshot.getValue() == null)
+                        return;
                     if (((ArrayList)dataSnapshot.getValue()).get(0) instanceof Double){
                         loc_data = (ArrayList<Double>) dataSnapshot.getValue();
                     }
@@ -544,4 +595,10 @@ creates a listener on the locations of all users we can see
         old_locations.put(W, loc_obj);
         bb.othersLocations().set(old_locations);
     }
+//client side tagging logic to be completed
+    /*private void get_tagged(){
+        String tagger = bb.userTaggedBy().value();
+        String curr_userid = bb.userName().value();
+        mDatabase.child("games").child()
+    }*/
 }

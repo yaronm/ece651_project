@@ -13,6 +13,7 @@ public class BlackboardApplication extends Application {
         blackboard = new ConcreteBlackboard();
         GameLogicLocation gLLocation = new GameLogicLocation(this, blackboard);
         GameLogicOrientation gLOrientation = new GameLogicOrientation(this, blackboard);
+        FirebaseCommunication communication = new FirebaseCommunication(blackboard);
     }
 
     private Blackboard blackboard;
