@@ -146,6 +146,12 @@ public class DataViewActivity extends AppCompatActivity {
         application.getBlackboard().othersDeltas().addObserver(othersDeltasObserver);
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        application.getBlackboard().currentActivity().set(this);
+    }
+
     BlackboardApplication application = new BlackboardApplication();
 
 }

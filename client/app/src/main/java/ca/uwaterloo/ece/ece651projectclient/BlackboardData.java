@@ -1,5 +1,7 @@
 package ca.uwaterloo.ece.ece651projectclient;
 
+import android.util.Log;
+
 import java.util.Observable;
 import java.util.Observer;
 
@@ -12,6 +14,8 @@ import java.util.Observer;
  * @see Blackboard
  */
 public class BlackboardData<T> extends Observable {
+
+    private static final String TAG = "BlackboardData";
 
     public BlackboardData(T value) {
         set(value);
@@ -37,6 +41,7 @@ public class BlackboardData<T> extends Observable {
      */
     public void set(T value) {
         this.value = value;
+        Log.d(TAG, value != null ? value.toString() : "null");
         setChanged();
         notifyObservers();
     }

@@ -1,7 +1,9 @@
 package ca.uwaterloo.ece.ece651projectclient;
 
+import android.app.Activity;
 import android.location.Location;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,9 +14,19 @@ import java.util.Set;
 public interface Blackboard {
 
     /**
+     * @return the currently active activity
+     */
+    public BlackboardData<Activity> currentActivity();
+
+    /**
      * @return the unique identifier string of the current game
      */
     public BlackboardData<String> currentGameId();
+
+    /**
+     * @return the time and date at which the game will end
+     */
+    public BlackboardData<Date> gameEndTime();
 
     /**
      * @return the state of the game.
@@ -58,6 +70,11 @@ public interface Blackboard {
      * @return the orientation of the user; represented in degrees East of true North
      */
     public BlackboardData<Float> userOrientation();
+
+    /**
+     * @return the username of the player that has tagged the game user
+     */
+    public BlackboardData<String> userTaggedBy();
 
     /**
      * @return the visibility matrix of the current game

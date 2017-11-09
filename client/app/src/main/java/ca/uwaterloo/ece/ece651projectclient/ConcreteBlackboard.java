@@ -1,7 +1,9 @@
 package ca.uwaterloo.ece.ece651projectclient;
 
+import android.app.Activity;
 import android.location.Location;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -9,11 +11,25 @@ import java.util.Set;
 
 public class ConcreteBlackboard implements Blackboard {
 
+    private final BlackboardData<Activity> currentActivity = new BlackboardData<>(null);
+
+    @Override
+    public BlackboardData<Activity> currentActivity() {
+        return currentActivity;
+    }
+
     private final BlackboardData<String> currentGameId = new BlackboardData<>("");
 
     @Override
     public BlackboardData<String> currentGameId() {
         return currentGameId;
+    }
+
+    private final BlackboardData<Date> gameEndTime = new BlackboardData<>(null);
+
+    @Override
+    public BlackboardData<Date> gameEndTime() {
+        return gameEndTime;
     }
 
     private final BlackboardData<GameState> gameState = new
@@ -76,8 +92,16 @@ public class ConcreteBlackboard implements Blackboard {
         return userOrientation;
     }
 
+    private final BlackboardData<String> userTaggedBy = new BlackboardData<>(null);
+
+    @Override
+    public BlackboardData<String> userTaggedBy() {
+        return userTaggedBy;
+    }
+
     private final BlackboardData<Map<String, Set<String>>> visibilityMatrix = new
             BlackboardData<Map<String, Set<String>>>(new HashMap<String, Set<String>>());
+
     @Override
     public BlackboardData<Map<String, Set<String>>> visibilityMatrix() {
         return visibilityMatrix;
