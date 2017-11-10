@@ -11,6 +11,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.lang.reflect.Array;
+import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -94,6 +95,9 @@ public class FirebaseCommunication {
             case CREATING: createGame();
                 break;
             case JOINING: gameSelected();
+                break;
+            case OUT: get_tagged();
+                break;
             default: return;
         }
     }
@@ -159,10 +163,10 @@ public class FirebaseCommunication {
     private void createGame() {
         VisibilityMatrixType VMat = bb.visibilityMatrixType().value();
         Map<String, Set<String>> visibilities = bb.visibilityMatrix().value();
-        Map <String, List<String>> visibilities_to_upload = new HashMap<>();
+        Map <String, Map<String, Object>> visibilities_to_upload = new HashMap<>();
         List<String> userIds = new ArrayList<>(bb.othersNames().value());
         String curr_user = bb.userName().value();
-        Date end = new Date();
+        Date end = bb.gameEndTime().value();
         Circle boundary;
 
         if (curr_user != null && !curr_user.equals("") && !curr_user.equals("none"))
@@ -176,27 +180,38 @@ public class FirebaseCommunication {
             createOpenGame();
             return;
         }
-        if (visibilities == null || visibilities.isEmpty()) {// initialize the visibilities map if not initialized with random
+        if (visibilities != null &&  !visibilities.isEmpty()){
+            for (String key : visibilities.keySet()){
+                Map <String, Object> vis = new HashMap<>();
+                for (String k:visibilities.get(key)){
+                    vis.put(k, 1);
+                }
+                visibilities_to_upload.put(key, vis);
+            }
+        }
+        else {// initialize the visibilities map if not initialized with random
             //vector.
             switch(VMat){
-                case HIDE_N_SEEK: visibilities = hideNseekVisGenerator();
+                case HIDE_N_SEEK: visibilities_to_upload = hideNseekVisGenerator();
                     break;
-                case ASSASSIN: visibilities = AssassinVisGenerator();
+                case ASSASSIN: visibilities_to_upload = AssassinVisGenerator();
                     break;
                 default:	bb.gameState().set(UNINITIALIZED);//may need to change
                     return;
             }
+            for (String k: visibilities_to_upload.keySet()){
+                Set<String> vis = visibilities_to_upload.get(k).keySet();
+                visibilities.put(k,vis);
+            }
+            bb.visibilityMatrix().set(visibilities);
         }
-        bb.visibilityMatrix().set(visibilities);
-        for (String key : visibilities.keySet()){
-            List <String> vis = new ArrayList<>();
-            vis.addAll(visibilities.get(key));
-            visibilities_to_upload.put(key, vis);
-        }
-        
+
 
         //initialize time limit to 1 hour from now
-        end.setTime(end.getTime() + 3600000); //eventually change to use Blackboard
+        if (end == null) {
+            end = new Date();
+            end.setTime(end.getTime() + 3600000);
+        }
 
         //initialize to non-existent circle
         boundary = new Circle(0, 0, 0); //eventually change to use Blackboard
@@ -238,9 +253,12 @@ public class FirebaseCommunication {
     creates an open game
      */
     private void createOpenGame(){
-        Date end = new Date();
-        end.setTime(end.getTime() + 3600000);//to remove
-        //need to do
+        Date end = bb.gameEndTime().value();
+        if (end == null) {
+            end = new Date();
+            end.setTime(end.getTime() + 3600000);//to remove
+        }
+        
         DatabaseReference game;
         int num_players = bb.numberOfPlayers().value();
         List<String> userIds = new ArrayList<>(bb.othersNames().value());
@@ -356,8 +374,13 @@ public class FirebaseCommunication {
             mDatabase.child("games").addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.hasChild(curr_game))
+                    if (dataSnapshot.hasChild(curr_game)){
                         join_custom = -1;
+                        if (dataSnapshot.child(curr_game).child("end_time").getValue() != null){
+                            if (dataSnapshot.child("end_time").getValue() != bb.gameEndTime().value())
+                                bb.gameEndTime().set((Date) dataSnapshot.child("end_time").getValue());
+                        }
+                    }
                 }
 
                 @Override
@@ -370,8 +393,13 @@ public class FirebaseCommunication {
             mDatabase.child("open_games").addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.hasChild(curr_game))
+                    if (dataSnapshot.hasChild(curr_game)){
                         join_custom = 1;
+                        if (dataSnapshot.child(curr_game).child("end_time").getValue() != null){
+                            if (dataSnapshot.child("end_time").getValue() != bb.gameEndTime().value())
+                                bb.gameEndTime().set((Date) dataSnapshot.child("end_time").getValue());
+                        }
+                    }
                 }
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
@@ -400,24 +428,23 @@ public class FirebaseCommunication {
      * with a random seeker, based on the othersNames
      * and username fields in the blackboard
     */
-    private Map<String, Set<String>> hideNseekVisGenerator(){
-        Map<String, Set<String>> visibilities = new HashMap<>();
+    private Map<String, Map<String, Object>> hideNseekVisGenerator(){
+        Map<String, Map<String, Object>> visibilities = new HashMap<>();
         List<String> userIds = new ArrayList<>(bb.othersNames().value());
-        Set<String> none_str = new HashSet<>();
+        Map<String, Object> none_str = new HashMap<>();
 
         userIds.add(bb.userName().value());
         Random r = new Random();
-        none_str.add("none");
+        none_str.put("none", 1);
         int j = r.nextInt(userIds.size());//select seeker at random
+        Map<String, Object> other_users = new HashMap<>();
         for (int i = 0; i < userIds.size(); i++) {
             if (i != j) {
                 visibilities.put(userIds.get(i), none_str);//hider
-            } else {
-                Set<String> vis = new HashSet<>((List<String>)(((ArrayList<String>) userIds).clone()));
-                vis.remove(userIds.get(j));//can't see self
-                visibilities.put(userIds.get(j), vis);//seeker
-            }
+                other_users.put(userIds.get(i), 1);
+            } 
         }
+        visibilities.put(userIds.get(j), other_users);
         return visibilities;
     }
 
@@ -426,22 +453,22 @@ public class FirebaseCommunication {
      * with a random seeker, based on the othersNames
      * and username fields in the blackboard
     */
-    private Map<String, Set<String>> AssassinVisGenerator(){
-        Map<String, Set<String>> visibilities = new HashMap<>();
+    private Map<String, Map<String, Object>> AssassinVisGenerator(){
+        Map<String, Map<String, Object>> visibilities = new HashMap<>();
         List<String> userIds = new ArrayList<>(bb.othersNames().value());
         userIds.add(bb.userName().value());
         List<String> targets = (List<String>)(((ArrayList<String>)userIds).clone());
         Collections.shuffle(targets);
         int i = 0;
         while (i < userIds.size()) {
-            if (targets.get(i) == userIds.get(i)){
+            if (targets.get(i).equals(userIds.get(i))){
                 Collections.shuffle(targets);
                 i = 0;
                 visibilities.clear();
                 continue;
             }
-            Set<String> vis_list = new HashSet<>();
-            vis_list.add(targets.get(i));
+            Map<String, Object> vis_list = new HashMap<>();
+            vis_list.put(targets.get(i), 1);
             visibilities.put(userIds.get(i), vis_list);
             i++;
         }
@@ -479,10 +506,11 @@ public class FirebaseCommunication {
                     addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
-                            Map<String, ArrayList<String>> vis_mat = (HashMap<String, ArrayList<String>>)(dataSnapshot.getValue());
-                            List<String> vis = vis_mat.get(userId);
-                            if (vis != null && !vis.get(0).equals("none")) {//only do this if can see someone
-                                visible_to_me.addAll(vis);
+                            Map<String, Map<String, Object>> vis_mat = (HashMap<String, Map<String, Object>>)(dataSnapshot.getValue());
+                            Map<String, Object> vis = vis_mat.get(userId);
+                            if (vis != null && vis.get("none") != null && (int)vis.get("none") != 1) {//only do this if can see someone
+                                visible_to_me.clear();
+                                visible_to_me.addAll(vis.keySet());
 
                                 remove_location_listeners();//clean locations listening to since our
                                 //visibility matrix has changed and replace with new listeners
@@ -490,9 +518,10 @@ public class FirebaseCommunication {
                             }
                             Map<String, Set<String>> vis_to_add = new HashMap<>();
                             for (String k :vis_mat.keySet()){
-                                Set <String> visibilties = new HashSet<>(vis_mat.get(k));
+                                Set <String> visibilties = vis_mat.get(k).keySet();
                                 vis_to_add.put(k, visibilties);
                             }
+                            bb.visibilityMatrix().set(vis_to_add);
                         }
 
                         @Override
@@ -502,8 +531,8 @@ public class FirebaseCommunication {
                     });
 
         }
-        if (!(bb.othersNames().value().isEmpty()) && !(bb.visibilityMatrix().value().isEmpty()))
-            bb.gameState().set(RUNNING);
+        while ((bb.othersNames().value().isEmpty()) || (bb.visibilityMatrix().value().isEmpty())){}
+        bb.gameState().set(RUNNING);
     }
 
     /*
@@ -595,10 +624,19 @@ public class FirebaseCommunication {
         old_locations.put(W, loc_obj);
         bb.othersLocations().set(old_locations);
     }
-//client side tagging logic to be completed
-    /*private void get_tagged(){
+    /*
+    client side tagging logic. adds this player to the other player's tag list
+    */
+    private void get_tagged(){
         String tagger = bb.userTaggedBy().value();
         String curr_userid = bb.userName().value();
-        mDatabase.child("games").child()
-    }*/
+        String curr_game = bb.currentGameId().value();
+        if (tagger == null || curr_userid == null || curr_game == null || tagger.equals("") 
+            || curr_userid.equals("") || curr_game.equals("") || tagger.equals("none") 
+            || curr_userid.equals("none") || curr_game.equals("none"))
+            return;
+            
+        DatabaseReference tag_record = mDatabase.child("games").child(curr_game).child("tags").child(tagger).push();
+        tag_record.setValue(curr_userid);
+    }
 }

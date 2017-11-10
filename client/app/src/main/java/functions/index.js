@@ -62,6 +62,37 @@ exports.open_game = functions.database.ref('open_games/{gameid}/').onWrite(event
 });
 
 //make visibility matrix and set running to true, copy game key to non-open games
+
+exports.tag_action = functions.database.ref('games/{gameid}/tags/{tagger}/{tagged}/').onWrite(event=>{
+    var tagged = event.data.val();
+    var tagger = event.params.tagger;
+    var vis_ref = admin.database().ref('/games').child(event.params.gameid).child('visibility');
+
+
+    vis_ref.transaction(function (vis){
+        if (vis){
+          console.log(vis);
+          var tagged_targs = vis[tagged];
+          for (var targ in tagged_targs){
+              console.log(targ);
+              vis[tagger][targ] = 1;
+          }
+          console.log('deleting');
+          for (var v in vis){
+              console.log('check');
+              console.log(v);
+            if (vis[v][tagged] != undefined){
+                delete (vis[v][tagged]);
+                console.log(v);
+            }
+          }
+          delete vis[tagged];
+          return vis;
+        }
+        return vis;
+    });
+});
+
 function initialize(users, event){
     console.log("initialize");
     mat_style = event.data.child("visibility_matrix_style").val();
@@ -84,7 +115,7 @@ function initialize(users, event){
 function generate_assassin(users, event){
     console.log("generate_assassin");
     var sec = users.reduce((a,v)=>a.splice(Math.floor(Math.random() * a.length), 0, v) && a, []);
-    var vis = {};
+    var vis = new Object();
     var redo = 1;
     while (redo == 1){
         for (var index = 0; index < sec.length; index ++){
@@ -94,7 +125,9 @@ function generate_assassin(users, event){
                 redo = 1;
                 break;
             }
-            vis[sec[index]] = users[index];
+            vis[sec[index]] = new Object();
+            var targ = users[index];
+            vis[sec[index]][targ] = 1;
             redo = 0;
         }
     }
@@ -104,13 +137,13 @@ function generate_assassin(users, event){
 
 function generate_hide_n_seek(users, event){
     var j = Math.floor(Math.random() * users.length);
-    var vis = {};
+    var vis = new Object();
+    vis[users[j]] = new Object();
     for (var i = 0; i < users.length; i++){
-        if (i == j){
-            vis[users[i]] = users;
-        }
-        else{
-            vis[users[i]] = ["none"];
+        if (i != j){
+            vis[users[j]][users[i]]=1;
+            vis[users[i]] = new Object();
+            vis[users[i]].none = 1;
         }
     }
     
