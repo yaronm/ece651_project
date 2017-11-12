@@ -31,16 +31,21 @@ package ca.uwaterloo.ece.ece651projectclient;
  * close listener service;
  */
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import android.Manifest;
 
 
 class GameLogicLocation {
@@ -49,6 +54,9 @@ class GameLogicLocation {
     private Blackboard blackboard;
     private Context userContext;
     private String userName;
+    private Activity current_activity;
+
+
 
     //variables for location
     private LocationManager locationManager;
@@ -61,6 +69,7 @@ class GameLogicLocation {
     public GameLogicLocation(Context userContext, Blackboard blackboard) {
         this.userContext = userContext;
         this.blackboard = blackboard;
+        current_activity = blackboard.currentActivity().value();
         userName = blackboard.userName().value();
         getOurLocation();
         readOtherLocation();
@@ -70,6 +79,13 @@ class GameLogicLocation {
      * get user location
      * */
     public void getOurLocation() {
+        // request for GPS permission
+        if (ContextCompat.checkSelfPermission(userContext, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(current_activity,
+                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+
+        }
         locationManager = (LocationManager) userContext.getSystemService(Context
                 .LOCATION_SERVICE);
         //choose provider to get locations
@@ -88,12 +104,9 @@ class GameLogicLocation {
         try {
             updateLocation(locationManager.getLastKnownLocation(provider));
             locationManager.requestLocationUpdates(provider, 5000, 1, locationListener);
-        }
-        catch(SecurityException e)
-        {
+        } catch (SecurityException e) {
             Log.i("location", "no permission to use GPS");
         }
-
     }
 
     /**
