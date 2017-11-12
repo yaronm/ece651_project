@@ -9,6 +9,11 @@ import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 public class SelectGameActivity extends AppCompatActivity {
     private RadioGroup radioGroup;
     private RadioButton radioButton;
@@ -44,6 +49,10 @@ public class SelectGameActivity extends AppCompatActivity {
     }
 
     public void onCreateGameClick(View view) {
+        //Get otherNames
+        EditText editOtherNames = (EditText) findViewById(R.id.editOtherNames);
+        Set<String> names = new HashSet<String>(Arrays.asList(editOtherNames.getText().toString().split(",")));
+        application.getBlackboard().othersNames().set(names);
         //Get NoOfPlayers
         EditText editNoOfPlayers = (EditText) findViewById(R.id.editNoOfPlayers);
         String value = editNoOfPlayers.getText().toString();
