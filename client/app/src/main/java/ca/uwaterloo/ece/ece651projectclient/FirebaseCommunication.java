@@ -109,7 +109,7 @@ public class FirebaseCommunication {
      * at least one opponent via othersNames or have the numberOfPlayers set to at least 2 and (2)
      * provide either a non-CUSTOM visibility matrix type or a pre-defined custom visibility matrix.
      * If creation is successful, sets the game state to JOINING. If available data is insufficient
-     * or if the creation failsfor any additional reason, returns the game state to UNINITIALIZED.
+     * or if the creation fails for any additional reason, returns the game state to UNINITIALIZED.
      */
     void createGame() {
         // check that the user name is set
@@ -161,7 +161,7 @@ public class FirebaseCommunication {
         }
 
         // finally, create the game atomically via a transaction
-        final List<String> finalOthersNames = new LinkedList<>(players);
+        final Map<String, Boolean> finalPlayers = setToMap(players, true);
         final int finalNumberOfPlayers = numberOfPlayers;
         final Map<String, List<String>> finalVisibilityMatrix = new HashMap<>();
         for (Map.Entry<String, Set<String>> entry : visibilityMatrix.asMap().entrySet()) {
@@ -175,7 +175,7 @@ public class FirebaseCommunication {
                 // if the game does not already exist, create the game
                 if (currentData == null) {
                     Map<String, Object> game = new HashMap<>();
-                    game.put("players", finalOthersNames);
+                    game.put("players", finalPlayers);
                     game.put("numberOfPlayers", finalNumberOfPlayers);
                     game.put("visibilityMatrix", finalVisibilityMatrix);
                     mutableData.setValue(game);
@@ -192,11 +192,32 @@ public class FirebaseCommunication {
             blackboard.gameState().set(GameState.UNINITIALIZED);
             return;
         }
+        // finish creation by linking players to the game
+        String newGameId = newGame.getKey();
+        for (String player : players) {
+            database.child("users").child(player).child("games").child(newGameId).setValue(true);
+        }
 
         // if creation succeeded, join the new game
-        String newGameId = newGame.getKey();
         blackboard.currentGameId().set(newGameId);
         blackboard.gameState().set(GameState.JOINING);
+    }
+
+    /**
+     * An auxiliary function to convert a set to a map for storage as a JSON object.
+     *
+     * @param set   an arbitrary set
+     * @param value a singular value
+     * @param <K>   the type of the set's elements
+     * @param <V>   the type of the given value
+     * @return a map where each element of the set is a key, mapped to the given value
+     */
+    static <K, V> Map<K, V> setToMap(Set<K> set, V value) {
+        Map<K, V> map = new HashMap<>(set.size());
+        for (K t : set) {
+            map.put(t, value);
+        }
+        return map;
     }
 
 }
