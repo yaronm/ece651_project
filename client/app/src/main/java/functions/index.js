@@ -4,7 +4,11 @@ const admin = require('firebase-admin');
 admin.initializeApp(functions.config().firebase);
 
  exports.init_user = functions.database.ref('users/{userid}/').onCreate(event => {
-	return event.data.ref.child('games').push("none");
+	return event.data.ref.child('games').child("none").set(1);
+});
+
+exports.delete_none = functions.database.ref('users/{userid}/games/').onUpdate(event => {
+	return event.data.ref.child("none").set(null);
 });
 
 exports.open_game = functions.database.ref('open_games/{gameid}/').onWrite(event=>{
