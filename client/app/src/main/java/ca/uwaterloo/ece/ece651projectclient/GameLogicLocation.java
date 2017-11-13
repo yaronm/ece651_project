@@ -31,6 +31,7 @@ package ca.uwaterloo.ece.ece651projectclient;
  * close listener service;
  */
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -41,12 +42,14 @@ import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
-import android.Manifest;
-
+import java.util.Timer;
+import java.util.TimerTask;
 
 class GameLogicLocation {
 
@@ -55,7 +58,9 @@ class GameLogicLocation {
     private Context userContext;
     private String userName;
     private Activity current_activity;
-
+    private Date currentTime;
+    private Date endTime;
+    private long gameTime;
 
 
     //variables for location
@@ -100,10 +105,11 @@ class GameLogicLocation {
         }
 
 
-        //check whether program has permission to access GSP
+        //check whether program has permission to access GPS
         try {
             updateLocation(locationManager.getLastKnownLocation(provider));
             locationManager.requestLocationUpdates(provider, 5000, 1, locationListener);
+            timer();
         } catch (SecurityException e) {
             Log.i("location", "no permission to use GPS");
         }
@@ -177,10 +183,30 @@ class GameLogicLocation {
         blackboard.userLocation().set(location);
     }
 
+
+    /**
+     * Timer
+     */
+    public void timer(){
+        endTime = blackboard.gameEndTime().value();
+        currentTime = new Date();
+        gameTime = endTime.getTime() - currentTime.getTime();
+        Timer timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                Log.d("location","location listener has been closed");
+                deleteListener();
+            }
+        };
+        timer.schedule(task,gameTime);
+
+    }
     /**
      * delete Listener
      */
     public void deleteListener() {
+
         locationManager.removeUpdates(locationListener);
     }
 

@@ -7,6 +7,10 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 
+import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
+
 /**
  * Created by Terry on 2017/10/19.
  * @author Chen XU and Haoyuan Zhang
@@ -41,6 +45,10 @@ public class GameLogicOrientation {
     private float[] accelerometerValues = new float[3];
     private float[] magneticFieldValues = new float[3];
 
+    private Date currentTime;
+    private Date endTime;
+    private long gameTime;
+
     //set parameters
     /**
      * This is constructor of class GameLogicOrientation
@@ -70,6 +78,7 @@ public class GameLogicOrientation {
                 accelerometer, Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(new MySensorEventListener(), magnetic,
                 Sensor.TYPE_MAGNETIC_FIELD);
+        timer();
         calculateOrientation();
     }
 
@@ -132,6 +141,27 @@ public class GameLogicOrientation {
         }
     }
 
+
+
+    /**
+     * timer
+     */
+
+    public void timer(){
+        endTime = blackboard.gameEndTime().value();
+        currentTime = new Date();
+        gameTime = endTime.getTime() - currentTime.getTime();
+        Timer timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                Log.d("location","orientation listener has been closed");
+                deleteListener();
+            }
+        };
+        timer.schedule(task,gameTime);
+
+    }
 }
 
 
