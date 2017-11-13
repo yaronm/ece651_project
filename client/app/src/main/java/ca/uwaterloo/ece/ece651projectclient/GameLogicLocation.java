@@ -51,6 +51,10 @@ import java.util.Observer;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import static ca.uwaterloo.ece.ece651projectclient.GameState.JOINING;
+import static ca.uwaterloo.ece.ece651projectclient.GameState.PAUSED;
+import static ca.uwaterloo.ece.ece651projectclient.GameState.RUNNING;
+
 class GameLogicLocation {
 
     //variables for initialization
@@ -78,6 +82,7 @@ class GameLogicLocation {
         userName = blackboard.userName().value();
         getOurLocation();
         readOtherLocation();
+        gameState();
     }
 
     /**
@@ -233,4 +238,25 @@ class GameLogicLocation {
 
         }
     };
+
+    /**
+     * observer the state
+     */
+    public void gameState() {
+        blackboard.gameState().addObserver(new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                Log.i("location", "Observed that game state has been updated");
+                    if(blackboard.gameState().value()==RUNNING){
+                        getOurLocation();
+
+                     }
+                    else (blackboard.gameState().value()==PAUSED){
+                        locationManager.removeUpdates(locationListener);
+                    }
+
+            }
+        });
+    }
+
 }
