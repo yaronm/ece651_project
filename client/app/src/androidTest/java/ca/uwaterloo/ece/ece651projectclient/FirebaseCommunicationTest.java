@@ -5,32 +5,27 @@ import android.support.test.runner.AndroidJUnit4;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.Collections;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
- * FirebaseCommunication offline unit testing. Does not include online, server integration testing.
+ * FirebaseCommunication unit testing.
  */
 @RunWith(AndroidJUnit4.class)
 public class FirebaseCommunicationTest {
 
-    @BeforeClass
-    public static void setUpClass() {
-        // turn firebase client networking off for testing
-        FirebaseDatabase.getInstance().goOffline();
-    }
-
     @Before
     public void setUp() {
-        // initialize the firebase client to a base testing configuration
-        // (to avoid data persistence between tests)
+        // initialize the firebase client
         database = FirebaseDatabase.getInstance().getReference();
-        database.removeValue();
         // initialize the blackboard
         blackboard = new ConcreteBlackboard();
         // initialize the firebase communication module
