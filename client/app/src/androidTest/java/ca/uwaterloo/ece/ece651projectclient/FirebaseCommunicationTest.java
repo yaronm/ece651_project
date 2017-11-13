@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Collections;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -30,8 +31,9 @@ public class FirebaseCommunicationTest {
         blackboard = new ConcreteBlackboard();
         // initialize the firebase communication module
         communication = new FirebaseCommunication(blackboard);
-        // use the firebase connection to setup a test user
-        blackboard.userName().set("testuser");
+        // use the firebase connection to setup test users
+        blackboard.userName().set("userA");
+        blackboard.userName().set("userB");
     }
 
     DatabaseReference database;
@@ -46,28 +48,103 @@ public class FirebaseCommunicationTest {
 
     @Test
     public void testUserNew() {
-        // set the username to a new user
-        String username = "newuser";
-        blackboard.userName().set(username);
+        // get the current number of users
         BlockingValueEventListener listener = new BlockingValueEventListener();
         database.child("users").addListenerForSingleValueEvent(listener);
+        long numberOfUsers = listener.getSnapshot().getChildrenCount();
+        // set the username to a new user
+        String username = "userC";
+        blackboard.userName().set(username);
+        listener = new BlockingValueEventListener();
+        database.child("users").addListenerForSingleValueEvent(listener);
         // test that a new user exists
-        assertEquals(2, listener.getSnapshot().getChildrenCount());
+        assertEquals(numberOfUsers + 1, listener.getSnapshot().getChildrenCount());
         // test that the correct new user was added
         assertNotNull(listener.getSnapshot().child(username));
     }
 
     @Test
     public void testUserReturning() {
-        // set the username to a returning user
-        String username = "testuser";
-        blackboard.userName().set(username);
+        // get the current number of users
         BlockingValueEventListener listener = new BlockingValueEventListener();
         database.child("users").addListenerForSingleValueEvent(listener);
+        long numberOfUsers = listener.getSnapshot().getChildrenCount();
+        // set the username to a returning user
+        String username = "userA";
+        blackboard.userName().set(username);
+        listener = new BlockingValueEventListener();
+        database.child("users").addListenerForSingleValueEvent(listener);
         // test that a no new users have been created
-        assertEquals(1, listener.getSnapshot().getChildrenCount());
+        assertEquals(numberOfUsers, listener.getSnapshot().getChildrenCount());
         // test that the returning user still exists
         assertNotNull(listener.getSnapshot().child(username));
+    }
+
+    @Test
+    public void testGameCreateNoUserName() {
+        // set the username to null
+        blackboard.userName().set(null);
+        // attempt to create game
+        blackboard.gameState().set(GameState.CREATING);
+        // check that game creation was rejected
+        assertEquals(GameState.UNINITIALIZED, blackboard.gameState().value());
+    }
+
+    @Test
+    public void testGameCreateNotEnoughPlayers() {
+        // set username to a returning user
+        blackboard.userName().set("userA");
+        // attempt to create game
+        blackboard.gameState().set(GameState.CREATING);
+        // check that game creation was rejected
+        assertEquals(GameState.UNINITIALIZED, blackboard.gameState().value());
+    }
+
+    @Test
+    public void testGameCreateInvalidMatrix() {
+        // set username to a returning user
+        blackboard.userName().set("userA");
+        // add another player
+        Set<String> othersNames = blackboard.othersNames().value();
+        othersNames.add("userB");
+        blackboard.othersNames().set(othersNames);
+        // create invalid visibility matrix
+        blackboard.visibilityMatrix().set(new
+                VisibilityMatrix(VisibilityMatrixType.HIDE_N_SEEK, 3));
+        // attempt to create game
+        blackboard.gameState().set(GameState.CREATING);
+        // check that game creation was rejected
+        assertEquals(GameState.UNINITIALIZED, blackboard.gameState().value());
+    }
+
+    @Test
+    public void testGameCreateClosed() {
+        // set username to a returning user
+        blackboard.userName().set("userA");
+        // add another player
+        Set<String> othersNames = blackboard.othersNames().value();
+        othersNames.add("userB");
+        blackboard.othersNames().set(othersNames);
+        // select visibility matrix type
+        blackboard.visibilityMatrixType().set(VisibilityMatrixType.HIDE_N_SEEK);
+        // attempt to create game
+        blackboard.gameState().set(GameState.CREATING);
+        // check that game creation was accepted
+        assertEquals(GameState.JOINING, blackboard.gameState().value());
+    }
+
+    @Test
+    public void testGameCreateOpen() {
+        // set username to a returning user
+        blackboard.userName().set("userA");
+        // add another open player
+        blackboard.numberOfPlayers().set(2);
+        // select visibility matrix type
+        blackboard.visibilityMatrixType().set(VisibilityMatrixType.HIDE_N_SEEK);
+        // attempt to create game
+        blackboard.gameState().set(GameState.CREATING);
+        // check that game creation was accepted
+        assertEquals(GameState.JOINING, blackboard.gameState().value());
     }
 
 }
