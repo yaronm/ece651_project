@@ -1,7 +1,6 @@
 package ca.uwaterloo.ece.ece651projectclient;
 
 import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -107,6 +106,7 @@ public class FirebaseCommunicationTest {
         othersNames.add("userB");
         blackboard.othersNames().set(othersNames);
         // create invalid visibility matrix
+        blackboard.visibilityMatrixType().set(VisibilityMatrixType.CUSTOM);
         blackboard.visibilityMatrix().set(new
                 VisibilityMatrix(VisibilityMatrixType.HIDE_N_SEEK, 3));
         // check that game creation is rejected

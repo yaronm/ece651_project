@@ -3,6 +3,7 @@ package ca.uwaterloo.ece.ece651projectclient;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -11,14 +12,17 @@ import java.util.Set;
 public class VisibilityMatrix {
 
     /**
-     * Constructs a visibility matrix of the given type and with the given number of players. If
-     * the given type is CUSTOM, an empty visibility matrix will be created.
+     * Constructs a visibility matrix of the given type and with the given number of players.
      *
      * @param type            a visibility matrix type
      * @param numberOfPlayers the number of players to include in the visibility matrix
-     * @throws IllegalArgumentException if numberOfPlayers < 2
+     * @throws IllegalArgumentException if type is CUSTOM or numberOfPlayers < 2
      */
     public VisibilityMatrix(VisibilityMatrixType type, int numberOfPlayers) {
+        if (type == VisibilityMatrixType.CUSTOM) {
+            throw new IllegalArgumentException("Invalid visibility matrix type: " +
+                    VisibilityMatrixType.CUSTOM);
+        }
         if (numberOfPlayers < 2) {
             throw new IllegalArgumentException("Too few players");
         }
@@ -34,23 +38,56 @@ public class VisibilityMatrix {
 
     private void initializeAssassin(int numberOfPlayers) {
         for (int i = 0; i < numberOfPlayers; ++i) {
-            String assasin = Integer.toString(i);
+            String assasin = unassignedName(i);
             Set<String> target = new HashSet<>(1);
-            target.add(Integer.toString((i + 1) % numberOfPlayers));
+            target.add(unassignedName((i + 1) % numberOfPlayers));
             matrix.put(assasin, target);
+            unassigned.add(assasin);
         }
     }
 
     private void initializeHideNSeek(int numberOfPlayers) {
-        String seeker = Integer.toString(0);
+        String seeker = unassignedName(0);
         Set<String> hiders = new HashSet<>(numberOfPlayers - 1);
         for (int i = 1; i < numberOfPlayers; ++i) {
-            hiders.add(Integer.toString(i));
+            String hider = unassignedName(i);
+            hiders.add(hider);
+            unassigned.add(hider);
         }
         matrix.put(seeker, hiders);
+        unassigned.add(seeker);
     }
 
-    Map<String, Set<String>> matrix = new HashMap<>();
+    private String unassignedName(int i) {
+        return "@" + i;
+    }
+
+    /**
+     * Constructs a visibility matrix with the given mapping of visibilities with no unassigned
+     * players.
+     *
+     * @param matrix a mapping of visibilities
+     */
+    public VisibilityMatrix(Map<String, Set<String>> matrix) {
+        this(matrix, null);
+    }
+
+    /**
+     * Constructs a visibility matrix with the given mapping of visibilities with the given
+     * unassigned players.
+     *
+     * @param matrix     a mapping of visibilities
+     * @param unassigned a set of names that have not yet been assigned players
+     */
+    public VisibilityMatrix(Map<String, Set<String>> matrix, Set<String> unassigned) {
+        this.matrix = matrix;
+        if (unassigned != null) {
+            this.unassigned.addAll(unassigned);
+        }
+    }
+
+    private Map<String, Set<String>> matrix = new HashMap<>();
+    private Set<String> unassigned = new HashSet<>();
 
     /**
      * Gets a map representing this visibility matrix. The returned map is backed by this
@@ -63,20 +100,94 @@ public class VisibilityMatrix {
     }
 
     /**
+     * @return the players in this visibility matrix
+     */
+    Set<String> getPlayers() {
+        Set<String> players = new HashSet<>();
+        players.addAll(matrix.keySet());
+        for (Set<String> targets : matrix.values()) {
+            players.addAll(targets);
+        }
+        return players;
+    }
+
+    /**
+     * Assigns a player to one of this visibility matrix's unassigned slots at random. If the player
+     * is already in the visibility matrix or if there are no unassigned slots, this method has
+     * no effect.
+     *
+     * @param player the player to be assigned
+     */
+    public void assignPlayer(String player) {
+        if (!unassigned.isEmpty() && !getPlayers().contains(player)) {
+            // choose a random slot to assign to the player
+            Random random = new Random();
+            int i = random.nextInt(unassigned.size());
+            String replaced = unassigned.toArray(new String[unassigned.size()])[i];
+            unassigned.remove(replaced);
+            assignPlayer(replaced, player);
+        }
+    }
+
+    void assignPlayer(String replaced, String player) {
+        // iterate over the visibility matrix and replace occurrences of the unassigned
+        // placeholder with the given player
+        if (matrix.containsKey(replaced)) {
+            matrix.put(player, matrix.remove(replaced));
+        }
+        for (Set<String> players : matrix.values()) {
+            if (players.contains(replaced)) {
+                players.add(player);
+                players.remove(replaced);
+            }
+        }
+    }
+
+    /**
      * Validates that this visibility matrix can be used in a game with the given number of players.
      *
      * @param numberOfPlayers the number of players
      * @return whether this visibility matrix is valid
      */
     public boolean isValid(int numberOfPlayers) {
-        // collect all the players in this visibility matrix
-        Set<String> players = new HashSet<>();
-        players.addAll(matrix.keySet());
-        for (Set<String> targets: matrix.values()) {
-            players.addAll(targets);
+        return numberOfPlayers == getPlayers().size();
+    }
+
+    /**
+     * Gets a map representing this visibility matrix in a way that can be serialize and stored
+     * by firebase.
+     *
+     * @return a map respresenting this visibility matrix
+     */
+    public Map<String, Object> asFirebaseSerializableMap() {
+        // construct the serializable data structure
+        Map<String, Object> matrix = new HashMap<>(asMap().size());
+        for (Map.Entry<String, Set<String>> entry : asMap().entrySet()) {
+            matrix.put(entry.getKey(), FirebaseUtils.setToMap(entry.getValue(), true));
         }
-        // compare the number of players in this matrix to the validation target
-        return numberOfPlayers == players.size();
+        Map<String, Object> visibility = new HashMap<>();
+        visibility.put("matrix", matrix);
+        visibility.put("unassigned",
+                unassigned.isEmpty() ? null : FirebaseUtils.setToMap(unassigned, true));
+        return visibility;
+    }
+
+    /**
+     * Gets a VisibilityMatrix that corresponds to the given firebase serialization.
+     *
+     * @return a VisibilityMatrix
+     */
+    public static VisibilityMatrix fromFirebaseSerializableMap(Map<String, Object> map) {
+        Map<String, Set<String>> matrix = new HashMap<>(map.size());
+        for (Map.Entry<String, Map<String, ?>> entry :
+                ((Map<String, Map<String, ?>>) map.get("matrix")).entrySet()) {
+            matrix.put(entry.getKey(), new HashSet<String>(entry.getValue().keySet()));
+        }
+        Set<String> unassigned = null;
+        if (map.containsKey("unassigned")) {
+            unassigned = ((Map<String, ?>) map.get("unassigned")).keySet();
+        }
+        return new VisibilityMatrix(matrix, unassigned);
     }
 
 }

@@ -100,7 +100,7 @@ public class ConcreteBlackboard implements Blackboard {
     }
 
     private final BlackboardData<VisibilityMatrix> visibilityMatrix = new
-            BlackboardData<>(new VisibilityMatrix(VisibilityMatrixType.CUSTOM, 2));
+            BlackboardData<>(null);
 
     @Override
     public BlackboardData<VisibilityMatrix> visibilityMatrix() {
@@ -108,7 +108,7 @@ public class ConcreteBlackboard implements Blackboard {
     }
 
     private final BlackboardData<VisibilityMatrixType> visibilityMatrixType = new
-            BlackboardData<>(VisibilityMatrixType.CUSTOM);
+            BlackboardData<>(VisibilityMatrixType.HIDE_N_SEEK);
 
     @Override
     public BlackboardData<VisibilityMatrixType> visibilityMatrixType() {

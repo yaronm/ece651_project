@@ -13,8 +13,6 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
@@ -175,14 +173,16 @@ public class FirebaseCommunication {
         else {
             visibilityMatrix = new VisibilityMatrix(visibilityMatrixType, numberOfPlayers);
         }
+        // populate the visibility matrix with the players that are already in the game
+        for (String player : players) {
+            visibilityMatrix.assignPlayer(player);
+        }
 
         // finally, create the game atomically via a transaction
-        final Map<String, Boolean> finalPlayers = setToMap(players, true);
+        final Map<String, Boolean> finalPlayers = FirebaseUtils.setToMap(players, true);
         final int finalNumberOfPlayers = numberOfPlayers;
-        final Map<String, List<String>> finalVisibilityMatrix = new HashMap<>();
-        for (Map.Entry<String, Set<String>> entry : visibilityMatrix.asMap().entrySet()) {
-            finalVisibilityMatrix.put(entry.getKey(), new LinkedList<String>(entry.getValue()));
-        }
+        final Map<String, Object> finalVisibilityMatrix =
+                visibilityMatrix.asFirebaseSerializableMap();
         DatabaseReference newGame = database.child("games").push();
         BlockingTransactionHandler handler = new BlockingTransactionHandler() {
             @Override
@@ -193,7 +193,7 @@ public class FirebaseCommunication {
                     Map<String, Object> game = new HashMap<>();
                     game.put("players", finalPlayers);
                     game.put("numberOfPlayers", finalNumberOfPlayers);
-                    game.put("visibilityMatrix", finalVisibilityMatrix);
+                    game.put("visibility", finalVisibilityMatrix);
                     mutableData.setValue(game);
                     return Transaction.success(mutableData);
                 }
@@ -259,6 +259,15 @@ public class FirebaseCommunication {
                 else if (players.size() < numberOfPlayers) {
                     players.put(userName, true);
                     mutableData.child("players").setValue(players);
+                    VisibilityMatrix visibility = VisibilityMatrix.fromFirebaseSerializableMap(
+                            mutableData.child("visibility").getValue(
+                                    new GenericTypeIndicator<Map<String, Object>>() {
+                                    }));
+                    Log.d(TAG, visibility.asFirebaseSerializableMap().toString());
+                    visibility.assignPlayer(userName);
+                    Log.d(TAG, visibility.asFirebaseSerializableMap().toString());
+                    mutableData.child("visibility").setValue(
+                            visibility.asFirebaseSerializableMap());
                     return Transaction.success(mutableData);
                 }
                 // otherwise, there's no room in the game for the player
@@ -277,8 +286,6 @@ public class FirebaseCommunication {
         // wait and check that the game has been joined successfully
         if (!handler.isCommitted()) {
             Log.d(TAG, "Could not join game: Joining rejected by server");
-            if (handler.getError() != null)
-                Log.d(TAG, "DatabaseError", handler.getError().toException());
             return false;
         }
         return true;
@@ -324,23 +331,6 @@ public class FirebaseCommunication {
         };
         game.addValueEventListener(listener);
         return true;
-    }
-
-    /**
-     * An auxiliary function to convert a set to a map for storage as a JSON object.
-     *
-     * @param set   an arbitrary set
-     * @param value a singular value
-     * @param <K>   the type of the set's elements
-     * @param <V>   the type of the given value
-     * @return a map where each element of the set is a key, mapped to the given value
-     */
-    static <K, V> Map<K, V> setToMap(Set<K> set, V value) {
-        Map<K, V> map = new HashMap<>(set.size());
-        for (K t : set) {
-            map.put(t, value);
-        }
-        return map;
     }
 
 }
