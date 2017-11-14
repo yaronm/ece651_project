@@ -8,6 +8,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.GenericTypeIndicator;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.HashMap;
@@ -85,12 +87,66 @@ public class FirebaseGameCommunication {
         }
 
         // check that the current game id is set
-        String currentGameId = blackboard.currentGameId().value();
+        final String currentGameId = blackboard.currentGameId().value();
         if (currentGameId == null) {
             Log.d(TAG, "Could not enable game data synchronization: Current game id not set");
             return false;
         }
 
+        // start observing whether the user has been tagged for upload to the server
+        taggedObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                // check the tagger is non-null
+                final String tagger = blackboard.userTaggedBy().value();
+                if (tagger == null) {
+                    Log.d(TAG, "Could not report tag: null tagger");
+                    return;
+                }
+
+                // update the game atomically to set the user as tagged out
+                BlockingTransactionHandler handler = new BlockingTransactionHandler() {
+                    @Override
+                    public Transaction.Result doTransaction(MutableData mutableData) {
+                        // check that received visibility matrix is non-null
+                        Map<String, Object> visibility = mutableData.child("visibility").getValue(
+                                new GenericTypeIndicator<Map<String, Object>>() {});
+                        if (visibility == null) {
+                            Log.d(TAG, "Could not report tag: null visibility matrix");
+                            return Transaction.abort();
+                        }
+                        // assign the tagged player's target(s) to the tagger
+                        VisibilityMatrix visibilityMatrix = VisibilityMatrix
+                                .fromFirebaseSerializableMap(visibility);
+                        visibilityMatrix.transferTargets(userName, tagger);
+                        mutableData.child("visibility").setValue(
+                                visibilityMatrix.asFirebaseSerializableMap());
+                        // apply the transaction
+                        return Transaction.success(mutableData);
+                    }
+                };
+                // invoke the tagging transaction only while the server game data is cached in the
+                // local firebase client by an outstanding listener; a necessary workaround to
+                // avoid the tagging transaction getting applied to a local null value
+                // see: https://groups.google.com/forum/#!topic/firebase-talk/tyj-5G6Fzgs
+                BlockingValueEventListener listener = new BlockingValueEventListener() {};
+                database.child("games").child(currentGameId).addValueEventListener(listener);
+                listener.getSnapshot();
+                database.child("games").child(currentGameId).runTransaction(handler);
+                database.child("games").child(currentGameId).removeEventListener(listener);
+                // wait and check that the tag was successful
+                if (!handler.isCommitted()) {
+                    Log.d(TAG, "Could not report tag: tag rejected by server");
+                    return;
+                }
+                // finish tag by recording that the user was tagged
+                database.child("games").child(currentGameId).child("out").child(userName)
+                        .setValue(true);
+                // and set the user to the OUT game state
+                blackboard.gameState().set(GameState.OUT);
+            }
+        };
+        blackboard.userTaggedBy().addObserver(taggedObserver);
         // start listening to changes to the game's players
         disableSynchronization();
         playersListener = database.child("games").child(currentGameId).child("players")
@@ -99,8 +155,7 @@ public class FirebaseGameCommunication {
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         // check that received players set is non-null
                         Map<String, Object> players = dataSnapshot.getValue(
-                                new GenericTypeIndicator<Map<String, Object>>() {
-                                });
+                                new GenericTypeIndicator<Map<String, Object>>() {});
                         if (players == null) {
                             Log.d(TAG, "Received null list of players");
                             return;
@@ -124,8 +179,7 @@ public class FirebaseGameCommunication {
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         // check that received visibility matrix is non-null
                         Map<String, Object> visibility = dataSnapshot.getValue(
-                                new GenericTypeIndicator<Map<String, Object>>() {
-                                });
+                                new GenericTypeIndicator<Map<String, Object>>() {});
                         if (visibility == null) {
                             Log.d(TAG, "Received null visibility matrix");
                             return;
@@ -168,11 +222,6 @@ public class FirebaseGameCommunication {
         locationObserver = new Observer() {
             @Override
             public void update(Observable o, Object arg) {
-                String userName = blackboard.userName().value();
-                if (userName == null) {
-                    Log.d(TAG, "Could not upload location data: User name not set");
-                    return;
-                }
                 database.child("users").child(userName).child("location").setValue(
                         FirebaseUtils.serializeFirebaseLocation(blackboard.userLocation().value()));
             }

@@ -89,7 +89,6 @@ public class FirebaseGameCommunicationTest {
         Location location = new Location("FirebaseGameCommunicationTest");
         location.setLatitude(0);
         location.setLongitude(0);
-        blackboard1.userLocation().set(location);
         blackboard2.userLocation().set(location);
         try {
             Thread.sleep(1000);
@@ -103,6 +102,31 @@ public class FirebaseGameCommunicationTest {
         assertEquals(blackboard2.userLocation().value().getLongitude(),
                 blackboard1.othersLocations().value().get("gameUserB").getLongitude(), 0.001);
         assertTrue(blackboard2.othersLocations().value().isEmpty());
+    }
+
+    @Test
+    public void testTagSynchronization() {
+         // enable synchronization for both players
+        assertTrue(gameCommunication1.enableSynchronization());
+        assertTrue(gameCommunication2.enableSynchronization());
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // set the second player to be tagged
+        blackboard2.userTaggedBy().set("gameUserA");
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // verify the the second player has been tagged out
+        BlockingValueEventListener listener = new BlockingValueEventListener();
+        database.child("games").child(blackboard1.currentGameId().value()).child("out")
+                .child("gameUserB").addListenerForSingleValueEvent(listener);
+        assertTrue(listener.getSnapshot().getValue(Boolean.class));
+        assertEquals(GameState.OUT, blackboard2.gameState().value());
     }
 
 }

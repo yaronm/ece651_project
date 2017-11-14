@@ -144,6 +144,20 @@ public class VisibilityMatrix {
     }
 
     /**
+     * Transfers one player's targets to another player's. Upon completion, the source player
+     * will have no targets.
+     *
+     * @param src the player from which targets should be transferred
+     * @param dst the player to which the targets should be transferred
+     */
+    public void transferTargets(String src, String dst) {
+        Set<String> toTransfer = matrix.remove(src);
+        if (toTransfer != null) {
+            matrix.get(dst).addAll(toTransfer);
+        }
+    }
+
+    /**
      * Validates that this visibility matrix can be used in a game with the given number of players.
      *
      * @param numberOfPlayers the number of players
