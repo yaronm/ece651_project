@@ -11,6 +11,20 @@ import java.util.Set;
  */
 public class FirebaseUtils {
 
+    public static Map<String, Double> serializeFirebaseLocation(Location location) {
+        Map<String, Double> map = new HashMap<>();
+        map.put("latitude", location.getLatitude());
+        map.put("longitude", location.getLongitude());
+        return map;
+    }
+
+    public static Location deserializeFirebaseLocation(Map<String, Double> firebaseLocation) {
+        Location location = new Location("FirebaseUtils");
+        location.setLatitude(firebaseLocation.get("latitude"));
+        location.setLongitude(firebaseLocation.get("longitude"));
+        return location;
+    }
+
     /**
      * An auxiliary function to convert a set to a map for storage as a JSON object.
      *
