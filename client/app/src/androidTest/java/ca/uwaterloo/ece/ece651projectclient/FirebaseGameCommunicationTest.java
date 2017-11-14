@@ -1,6 +1,6 @@
 package ca.uwaterloo.ece.ece651projectclient;
 
-import android.util.Log;
+import android.location.Location;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -73,6 +73,36 @@ public class FirebaseGameCommunicationTest {
         assertNotNull(blackboard2.visibilityMatrix().value());
         assertEquals(blackboard1.visibilityMatrix().value().asMap(),
                 blackboard2.visibilityMatrix().value().asMap());
+    }
+
+    @Test
+    public void testEnableLocationSynchronization() {
+        // enable synchronization for both players
+        assertTrue(gameCommunication1.enableSynchronization());
+        assertTrue(gameCommunication2.enableSynchronization());
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // set the location of the second player
+        Location location = new Location("FirebaseGameCommunicationTest");
+        location.setLatitude(0);
+        location.setLongitude(0);
+        blackboard1.userLocation().set(location);
+        blackboard2.userLocation().set(location);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // verify that othersLocations has been correctly updated
+        assertTrue(blackboard1.othersLocations().value().containsKey("gameUserB"));
+        assertEquals(blackboard2.userLocation().value().getLatitude(),
+                blackboard1.othersLocations().value().get("gameUserB").getLatitude(), 0.001);
+        assertEquals(blackboard2.userLocation().value().getLongitude(),
+                blackboard1.othersLocations().value().get("gameUserB").getLongitude(), 0.001);
+        assertTrue(blackboard2.othersLocations().value().isEmpty());
     }
 
 }

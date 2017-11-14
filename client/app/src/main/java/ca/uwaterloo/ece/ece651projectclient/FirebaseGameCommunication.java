@@ -67,8 +67,11 @@ public class FirebaseGameCommunication {
     private Map<String, ValueEventListener> locationListeners;
     private ValueEventListener visibilityListener;
 
+    private Observer locationObserver;
+    private Observer taggedObserver;
+
     /**
-     * Enables data synchronization from the firebase server. Requires that the userName and
+     * Enables data synchronization to and from the firebase server. Requires that the userName and
      * currentGameId are set in the blackboard.
      *
      * @return whether synchronization enabling succeeded
@@ -141,8 +144,8 @@ public class FirebaseGameCommunication {
     }
 
     /**
-     * Enables location synchronization from the firebase server. Requires that the userName and
-     * visibilityMatrix are set in the blackboard.
+     * Enables location synchronization to and from the firebase server. Requires that the userName
+     * and visibilityMatrix are set in the blackboard.
      *
      * @return whether location synchronization enabling succeeded
      */
@@ -161,6 +164,20 @@ public class FirebaseGameCommunication {
             return false;
         }
 
+        // start observing user location changes for upload to the server
+        locationObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                String userName = blackboard.userName().value();
+                if (userName == null) {
+                    Log.d(TAG, "Could not upload location data: User name not set");
+                    return;
+                }
+                database.child("users").child(userName).child("location").setValue(
+                        FirebaseUtils.serializeFirebaseLocation(blackboard.userLocation().value()));
+            }
+        };
+        blackboard.userLocation().addObserver(locationObserver);
         // get the set of players that are visible to the user
         Set<String> visiblePlayers = visibilityMatrix.asMap().get(userName);
         if (visiblePlayers == null) {
@@ -170,7 +187,7 @@ public class FirebaseGameCommunication {
         disableLocationSynchronization();
         locationListeners = new HashMap<>();
         for (final String player : visiblePlayers) {
-            ValueEventListener listener = database.child("players").child(player).child("location")
+            ValueEventListener listener = database.child("users").child(player).child("location")
                     .addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(DataSnapshot dataSnapshot) {
@@ -196,7 +213,7 @@ public class FirebaseGameCommunication {
     }
 
     /**
-     * Disables data synchronization from the firebase server.
+     * Disables data synchronization to and from the firebase server.
      */
     void disableSynchronization() {
         if (playersListener != null) {
@@ -211,9 +228,14 @@ public class FirebaseGameCommunication {
     }
 
     /**
-     * Disables location data synchronization from the firebase server.
+     * Disables location data synchronization to and from the firebase server.
      */
     void disableLocationSynchronization() {
+        // disable location synchronization to server
+        if (locationObserver != null) {
+            blackboard.userLocation().deleteObserver(locationObserver);
+            locationObserver = null;
+        }
         // disable location synchronization from server
         if (locationListeners != null) {
             for (Map.Entry<String, ValueEventListener> entry : locationListeners.entrySet()) {
