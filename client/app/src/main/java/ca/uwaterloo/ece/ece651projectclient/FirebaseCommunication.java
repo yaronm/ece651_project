@@ -18,6 +18,12 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 
+/**
+ * A class that handles general communication with the firebase server. Responsible for handling
+ * the transition of the game state from UNINITIALIZED to CREATING to JOINING and finally into
+ * RUNNING. Gameplay states after the transition into RUNNING are handled by
+ * {@link FirebaseGameCommunication}.
+ */
 public class FirebaseCommunication {
 
     private static final String TAG = "FirebaseComm";
@@ -164,10 +170,11 @@ public class FirebaseCommunication {
         }
 
         // if the visibility matrix is provided, check that it is valid
-        if (visibilityMatrixType == VisibilityMatrixType.CUSTOM &&
-                !visibilityMatrix.isValid(numberOfPlayers)) {
-            Log.d(TAG, "Could not create game: Invalid visibility matrix");
-            return false;
+        if (visibilityMatrixType == VisibilityMatrixType.CUSTOM) {
+            if (!visibilityMatrix.isValid(numberOfPlayers)) {
+                Log.d(TAG, "Could not create game: Invalid visibility matrix");
+                return false;
+            }
         }
         // otherwise, generate a visibility matrix
         else {
