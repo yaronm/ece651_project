@@ -60,7 +60,6 @@ class GameLogicLocation {
     //variables for initialization
     private Blackboard blackboard;
     private Context userContext;
-    private String userName;
     private Activity current_activity;
     private Date currentTime;
     private Date endTime;
@@ -78,11 +77,7 @@ class GameLogicLocation {
     public GameLogicLocation(Context userContext, Blackboard blackboard) {
         this.userContext = userContext;
         this.blackboard = blackboard;
-        current_activity = blackboard.currentActivity().value();
-        userName = blackboard.userName().value();
-        getOurLocation();
-        readOtherLocation();
-        gameState();
+        initialization();
     }
 
     /**
@@ -90,6 +85,7 @@ class GameLogicLocation {
      * */
     public void getOurLocation() {
         // request for GPS permission
+        current_activity = blackboard.currentActivity().value();
         if (ContextCompat.checkSelfPermission(userContext, Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(current_activity,
@@ -114,7 +110,6 @@ class GameLogicLocation {
         try {
             updateLocation(locationManager.getLastKnownLocation(provider));
             locationManager.requestLocationUpdates(provider, 5000, 1, locationListener);
-            timer();
         } catch (SecurityException e) {
             Log.i("location", "no permission to use GPS");
         }
@@ -161,7 +156,7 @@ class GameLogicLocation {
         float distance;
         float bearing;
         Location one_person_location;
-        // get the most-up-to-date user name firectly from the blackboard
+        // get the most-up-to-date user name irectly from the blackboard
         Location userLocation = blackboard.userLocation().value();
         // check that the user location is non-null before computing deltas; computing deltas when
         // the user location is undefined does not make sense
@@ -247,14 +242,32 @@ class GameLogicLocation {
             @Override
             public void update(Observable o, Object arg) {
                 Log.i("location", "Observed that game state has been updated");
-                    if(blackboard.gameState().value()==RUNNING){
+                    if(blackboard.gameState().value()==GameState.RUNNING){
                         getOurLocation();
 
                      }
-                    else (blackboard.gameState().value()==PAUSED){
+                    else (blackboard.gameState().value()==GameState.PAUSED){
                         locationManager.removeUpdates(locationListener);
                     }
 
+            }
+        });
+    }
+    /**
+     * initialization
+     */
+    public void initialization(){
+        while (blackboard.gameState().value() != GameState.RUNNING){
+
+        }
+        getOurLocation();
+        readOtherLocation();
+        gameState();
+        blackboard.gameEndTime().addObserver(new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                Log.i("location", "Observed that end time has been updated");
+                timer();
             }
         });
     }

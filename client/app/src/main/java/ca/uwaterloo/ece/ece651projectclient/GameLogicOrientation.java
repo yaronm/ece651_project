@@ -8,6 +8,8 @@ import android.hardware.SensorManager;
 import android.util.Log;
 
 import java.util.Date;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -56,7 +58,6 @@ public class GameLogicOrientation {
     public GameLogicOrientation(Context userContext, Blackboard blackboard) {
         this.userContext = userContext;
         this.blackboard = blackboard;
-        setOrientation();
     }
 
 
@@ -78,7 +79,6 @@ public class GameLogicOrientation {
                 accelerometer, Sensor.TYPE_ACCELEROMETER);
         mSensorManager.registerListener(new MySensorEventListener(), magnetic,
                 Sensor.TYPE_MAGNETIC_FIELD);
-        timer();
         calculateOrientation();
     }
 
@@ -143,6 +143,24 @@ public class GameLogicOrientation {
 
 
 
+     /**
+     * initialization
+     */
+
+    public void initialization(){
+        while (blackboard.gameState().value() != GameState.RUNNING){
+
+        }
+        setOrientation();
+        timer();
+        blackboard.gameEndTime().addObserver(new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                Log.i("location", "Observed that end time has been updated");
+                timer();
+            }
+        });
+    }
     /**
      * timer
      */
@@ -162,6 +180,7 @@ public class GameLogicOrientation {
         timer.schedule(task,gameTime);
 
     }
+
 }
 
 
