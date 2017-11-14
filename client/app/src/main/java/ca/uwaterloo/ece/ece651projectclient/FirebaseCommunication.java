@@ -6,8 +6,10 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,7 +58,7 @@ public class FirebaseCommunication {
      * associated with a user, creates a new user on the server. If the user name is null, this
      * method does nothing.
      */
-    void userNameSet() {
+    private void userNameSet() {
         // get the new user name
         String userName = blackboard.userName().value();
         // check that it is non-null
@@ -89,7 +91,7 @@ public class FirebaseCommunication {
      * Handles when the game state is set on the blackboard. If the game state is null, this
      * method does nothing.
      */
-    void gameStateSet() {
+    private void gameStateSet() {
         // get the new game state
         GameState gameState = blackboard.gameState().value();
         // check that it is non-null
@@ -99,7 +101,24 @@ public class FirebaseCommunication {
         // invoke the appropriate handler method
         switch (gameState) {
             case CREATING:
-                createGame();
+                // attempt to create a game
+                if (createGame()) {
+                    // if game is created successfully, attempt to join it
+                    blackboard.gameState().set(GameState.JOINING);
+                } else {
+                    // otherwise, reset game state to UNINITIALIZED
+                    blackboard.gameState().set(GameState.UNINITIALIZED);
+                }
+                break;
+            case JOINING:
+                // attempt to join a game
+                if (joinGame()) {
+                    // if game is joined successfully, wait until it is ready to be played
+                    waitToRunGame();
+                } else {
+                    // otherwise, reset game state to UNINITIALIZED
+                    blackboard.gameState().set(GameState.UNINITIALIZED);
+                }
                 break;
         }
     }
@@ -108,16 +127,15 @@ public class FirebaseCommunication {
      * Creates a new game using available data from the blackboard. The blackboard must (1) provide
      * at least one opponent via othersNames or have the numberOfPlayers set to at least 2 and (2)
      * provide either a non-CUSTOM visibility matrix type or a pre-defined custom visibility matrix.
-     * If creation is successful, sets the game state to JOINING. If available data is insufficient
-     * or if the creation fails for any additional reason, returns the game state to UNINITIALIZED.
+     * On success, sets the currentGameId to contain the unique game identifier of the new game.
+     * Returns whether creation is successful.
      */
-    void createGame() {
+    boolean createGame() {
         // check that the user name is set
         String userName = blackboard.userName().value();
         if (userName == null) {
             Log.d(TAG, "Could not create game: User name not set");
-            blackboard.gameState().set(GameState.UNINITIALIZED);
-            return;
+            return false;
         }
 
         // get the other participating players' names
@@ -144,16 +162,14 @@ public class FirebaseCommunication {
         // check that there are at least 2 players
         if (numberOfPlayers < 2) {
             Log.d(TAG, "Could not create game: Not enough players");
-            blackboard.gameState().set(GameState.UNINITIALIZED);
-            return;
+            return false;
         }
 
         // if the visibility matrix is provided, check that it is valid
         if (visibilityMatrixType == VisibilityMatrixType.CUSTOM &&
                 !visibilityMatrix.isValid(numberOfPlayers)) {
             Log.d(TAG, "Could not create game: Invalid visibility matrix");
-            blackboard.gameState().set(GameState.UNINITIALIZED);
-            return;
+            return false;
         }
         // otherwise, generate a visibility matrix
         else {
@@ -189,8 +205,7 @@ public class FirebaseCommunication {
         // wait and check that the new game is created successfully
         if (!handler.isCommitted()) {
             Log.d(TAG, "Could not create game: Game rejected by server");
-            blackboard.gameState().set(GameState.UNINITIALIZED);
-            return;
+            return false;
         }
         // finish creation by linking players to the game
         String newGameId = newGame.getKey();
@@ -198,9 +213,117 @@ public class FirebaseCommunication {
             database.child("users").child(player).child("games").child(newGameId).setValue(true);
         }
 
-        // if creation succeeded, join the new game
+        // on successful creation, store the new game's id as the currentGameId on the blackboard
         blackboard.currentGameId().set(newGameId);
-        blackboard.gameState().set(GameState.JOINING);
+        return true;
+    }
+
+    /**
+     * Joins an already existing game. The currentGameId on the blackboard must be set to the game
+     * id of the game that is intended to be joined. Joining may be rejected if the game is full.
+     * Returns whether joining succeeded.
+     */
+    boolean joinGame() {
+        // check that the user name is set
+        final String userName = blackboard.userName().value();
+        if (userName == null) {
+            Log.d(TAG, "Could not join game: User name not set");
+            return false;
+        }
+
+        // check that the current game id is set
+        String currentGameId = blackboard.currentGameId().value();
+        if (currentGameId == null) {
+            Log.d(TAG, "Could not join game: Current game id not set");
+            return false;
+        }
+
+        // join the game atomically via a transaction
+        BlockingTransactionHandler handler = new BlockingTransactionHandler() {
+            @Override
+            public Transaction.Result doTransaction(MutableData mutableData) {
+                // verify that the game exists
+                Object currentData = mutableData.getValue();
+                if (currentData == null) {
+                    return Transaction.abort();
+                }
+                // retrieve player data
+                Map<String, Object> players = mutableData.child("players").getValue(
+                        new GenericTypeIndicator<Map<String, Object>>() {});
+                long numberOfPlayers = mutableData.child("numberOfPlayers").getValue(Long.class);
+                // if the user is already a player in the game, do nothing
+                if (players.containsKey(userName)) {
+                    return Transaction.success(mutableData);
+                }
+                // if the user is not already a player in the game, add the user
+                else if (players.size() < numberOfPlayers) {
+                    players.put(userName, true);
+                    mutableData.child("players").setValue(players);
+                    return Transaction.success(mutableData);
+                }
+                // otherwise, there's no room in the game for the player
+                return Transaction.abort();
+            }
+        };
+        // invoke the game joining transaction only while the server game data is cached in the
+        // local firebase client by an outstanding listener; a necessary workaround to avoid the
+        // game joining transaction getting applied to a local null value
+        // see: https://groups.google.com/forum/#!topic/firebase-talk/tyj-5G6Fzgs
+        BlockingValueEventListener listener = new BlockingValueEventListener() {};
+        database.child("games").child(currentGameId).addValueEventListener(listener);
+        listener.getSnapshot();
+        database.child("games").child(currentGameId).runTransaction(handler, false);
+        database.child("games").child(currentGameId).removeEventListener(listener);
+        // wait and check that the game has been joined successfully
+        if (!handler.isCommitted()) {
+            Log.d(TAG, "Could not join game: Joining rejected by server");
+            if (handler.getError() != null)
+                Log.d(TAG, "DatabaseError", handler.getError().toException());
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Schedules the game to move to a RUNNING state when the required number of players join the
+     * current game. Changing currentGameId between the scheduling event and the point at which
+     * the game becomes ready to play cancels this scheduled game state transition. Returns whether
+     * scheduling was successful.
+     */
+    boolean waitToRunGame() {
+        // check that the current game id is set
+        String currentGameId = blackboard.currentGameId().value();
+        if (currentGameId == null) {
+            Log.d(TAG, "Error while waiting to run game: Current game id not set");
+            return false;
+        }
+
+        // wait until the required number of players have joined
+        final DatabaseReference game = database.child("games").child(currentGameId);
+        ValueEventListener listener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // retrieve game data
+                String gameId = dataSnapshot.getKey();
+                Map<String, Boolean> players = dataSnapshot.child("players").getValue(
+                        new GenericTypeIndicator<Map<String, Boolean>>() {});
+                long numberOfPlayers = dataSnapshot.child("numberOfPlayers").getValue(Long.class);
+                // check that the game we are waiting to play is still the current game
+                if (gameId != blackboard.currentGameId().value()) {
+                    game.removeEventListener(this);
+                }
+                // if the required number of players have joined, start the game running
+                else if (players.size() == numberOfPlayers) {
+                    game.removeEventListener(this);
+                    blackboard.gameState().set(GameState.RUNNING);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {}
+        };
+        game.addValueEventListener(listener);
+        return true;
     }
 
     /**
