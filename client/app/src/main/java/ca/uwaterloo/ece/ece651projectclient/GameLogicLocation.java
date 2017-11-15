@@ -51,10 +51,6 @@ import java.util.Observer;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static ca.uwaterloo.ece.ece651projectclient.GameState.JOINING;
-import static ca.uwaterloo.ece.ece651projectclient.GameState.PAUSED;
-import static ca.uwaterloo.ece.ece651projectclient.GameState.RUNNING;
-
 class GameLogicLocation {
 
     //variables for initialization
@@ -246,7 +242,7 @@ class GameLogicLocation {
                         getOurLocation();
 
                      }
-                    else (blackboard.gameState().value()==GameState.PAUSED){
+                    else if(blackboard.gameState().value()==GameState.PAUSED){
                         locationManager.removeUpdates(locationListener);
                     }
 
