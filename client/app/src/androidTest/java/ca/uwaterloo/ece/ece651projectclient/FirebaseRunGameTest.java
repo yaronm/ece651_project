@@ -6,6 +6,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -19,16 +20,25 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
- * FirebaseGameCommunication unit testing.
+ * FirebaseRunGame unit testing.
  */
-public class FirebaseGameCommunicationTest {
+public class FirebaseRunGameTest {
+
+    @BeforeClass
+    public static void setUpClass() {
+        // initialize the firebase client
+        database = FirebaseDatabase.getInstance().getReference().child("FirebaseRunGame").push();
+    }
+
+    static DatabaseReference database;
 
     @Before
-    public void setUp() {
+    public void setUp() throws InterruptedException {
         // create first player
         blackboard1 = new ConcreteBlackboard();
-        FirebaseCommunication communication1 = new FirebaseCommunication(blackboard1);
-        gameCommunication1 = new FirebaseGameCommunication(blackboard1);
+        new FirebaseLogin(blackboard1, database);
+        new FirebaseCreateGame(blackboard1, database);
+        new FirebaseJoinGame(blackboard1, database);
         blackboard1.userName().set("gameUserA");
         // create a game using that player
         blackboard1.othersNames().set(new HashSet<String>(Arrays.asList("gameUserB")));
@@ -36,30 +46,32 @@ public class FirebaseGameCommunicationTest {
         Map<String, Set<String>> matrix = new HashMap<>();
         matrix.put("gameUserA", new HashSet<String>(Arrays.asList("gameUserB")));
         blackboard1.visibilityMatrix().set(new VisibilityMatrix(matrix));
-        communication1.createGame();
-        communication1.joinGame();
+        blackboard1.gameState().set(GameState.CREATING);
+        Thread.sleep(1000);
 
         // create a second player
         blackboard2 = new ConcreteBlackboard();
-        FirebaseCommunication communication2 = new FirebaseCommunication(blackboard2);
-        gameCommunication2 = new FirebaseGameCommunication(blackboard2);
+        new FirebaseLogin(blackboard2, database);
+        new FirebaseCreateGame(blackboard2, database);
+        new FirebaseJoinGame(blackboard2, database);
         blackboard2.userName().set("gameUserB");
         // join the previously created game
         blackboard2.currentGameId().set(blackboard1.currentGameId().value());
-        communication2.joinGame();
+        blackboard2.gameState().set(GameState.JOINING);
+        Thread.sleep(1000);
 
-        // get a reference to the firebase database
-        database = FirebaseDatabase.getInstance().getReference();
+        // attach the game running handlers
+        runGame1 = new FirebaseRunGame(blackboard1, database);
+        runGame2 = new FirebaseRunGame(blackboard2, database);
     }
 
-    DatabaseReference database;
     Blackboard blackboard1, blackboard2;
-    FirebaseGameCommunication gameCommunication1, gameCommunication2;
+    FirebaseRunGame runGame1, runGame2;
 
     @Test
     public void testEnableSynchronization() {
         // enable synchronization for the second player
-        assertTrue(gameCommunication2.enableSynchronization());
+        assertTrue(runGame2.enableSynchronization());
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -78,15 +90,15 @@ public class FirebaseGameCommunicationTest {
     @Test
     public void testEnableLocationSynchronization() {
         // enable synchronization for both players
-        assertTrue(gameCommunication1.enableSynchronization());
-        assertTrue(gameCommunication2.enableSynchronization());
+        assertTrue(runGame1.enableSynchronization());
+        assertTrue(runGame2.enableSynchronization());
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         // set the location of the second player
-        Location location = new Location("FirebaseGameCommunicationTest");
+        Location location = new Location("FirebaseRunGameTest");
         location.setLatitude(0);
         location.setLongitude(0);
         blackboard2.userLocation().set(location);
@@ -107,8 +119,8 @@ public class FirebaseGameCommunicationTest {
     @Test
     public void testTagSynchronization() {
          // enable synchronization for both players
-        assertTrue(gameCommunication1.enableSynchronization());
-        assertTrue(gameCommunication2.enableSynchronization());
+        assertTrue(runGame1.enableSynchronization());
+        assertTrue(runGame2.enableSynchronization());
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {

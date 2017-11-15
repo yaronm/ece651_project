@@ -22,7 +22,7 @@ import java.util.Set;
  * A class that handles automatic configuration of communication with the firebase server during
  * gameplay. Responsible for enabling and disabling synchronizing of gameplay data with the server.
  */
-public class FirebaseGameCommunication {
+public class FirebaseRunGame {
 
     private static final String TAG = "FireGameComm";
 
@@ -31,11 +31,11 @@ public class FirebaseGameCommunication {
      *
      * @param blackboard a blackboard
      */
-    public FirebaseGameCommunication(Blackboard blackboard) {
+    public FirebaseRunGame(Blackboard blackboard, DatabaseReference database) {
         // store the blackboard
         this.blackboard = blackboard;
         // get access to the firebase database
-        database = FirebaseDatabase.getInstance().getReference();
+        this.database = database;
         // observe the blackboard for when the game state is set
         blackboard.gameState().addObserver(new Observer() {
             @Override
@@ -105,7 +105,7 @@ public class FirebaseGameCommunication {
                 }
 
                 // update the game atomically to set the user as tagged out
-                BlockingTransactionHandler handler = new BlockingTransactionHandler() {
+                final Transaction.Handler handler = new Transaction.Handler() {
                     @Override
                     public Transaction.Result doTransaction(MutableData mutableData) {
                         // check that received visibility matrix is non-null
@@ -115,38 +115,54 @@ public class FirebaseGameCommunication {
                             Log.d(TAG, "Could not report tag: null visibility matrix");
                             return Transaction.abort();
                         }
+
                         // assign the tagged player's target(s) to the tagger
                         VisibilityMatrix visibilityMatrix = VisibilityMatrix
                                 .fromFirebaseSerializableMap(visibility);
                         visibilityMatrix.transferTargets(userName, tagger);
                         mutableData.child("visibility").setValue(
                                 visibilityMatrix.asFirebaseSerializableMap());
+
                         // apply the transaction
                         return Transaction.success(mutableData);
+                    }
+
+                    @Override
+                    public void onComplete(DatabaseError databaseError, boolean committed,
+                                           DataSnapshot dataSnapshot) {
+                        // wait and check that the tag was successful
+                        if (!committed) {
+                            Log.d(TAG, "Could not report tag: tag rejected by server");
+                            return;
+                        }
+
+                        // finish tag by recording that the user was tagged
+                        database.child("games").child(currentGameId).child("out").child(userName)
+                                .setValue(true);
+                        // and set the user to the OUT game state
+                        blackboard.gameState().set(GameState.OUT);
                     }
                 };
                 // invoke the tagging transaction only while the server game data is cached in the
                 // local firebase client by an outstanding listener; a necessary workaround to
                 // avoid the tagging transaction getting applied to a local null value
                 // see: https://groups.google.com/forum/#!topic/firebase-talk/tyj-5G6Fzgs
-                BlockingValueEventListener listener = new BlockingValueEventListener() {};
-                database.child("games").child(currentGameId).addValueEventListener(listener);
-                listener.getSnapshot();
-                database.child("games").child(currentGameId).runTransaction(handler);
-                database.child("games").child(currentGameId).removeEventListener(listener);
-                // wait and check that the tag was successful
-                if (!handler.isCommitted()) {
-                    Log.d(TAG, "Could not report tag: tag rejected by server");
-                    return;
-                }
-                // finish tag by recording that the user was tagged
-                database.child("games").child(currentGameId).child("out").child(userName)
-                        .setValue(true);
-                // and set the user to the OUT game state
-                blackboard.gameState().set(GameState.OUT);
+                final DatabaseReference game = database.child("games").child(currentGameId);
+                final ValueEventListener listener = new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        game.runTransaction(handler);
+                        game.removeEventListener(this);
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {}
+                };
+                game.addValueEventListener(listener);
             }
         };
         blackboard.userTaggedBy().addObserver(taggedObserver);
+
         // start listening to changes to the game's players
         disableSynchronization();
         playersListener = database.child("games").child(currentGameId).child("players")
@@ -172,6 +188,7 @@ public class FirebaseGameCommunication {
                     @Override
                     public void onCancelled(DatabaseError databaseError) {}
                 });
+
         // start listening to changes to the game's visibility matrix
         visibilityListener = database.child("games").child(currentGameId).child("visibility")
                 .addValueEventListener(new ValueEventListener() {
@@ -232,6 +249,7 @@ public class FirebaseGameCommunication {
         if (visiblePlayers == null) {
             return true;
         }
+
         // start listening to changes to visible players' locations
         disableLocationSynchronization();
         locationListeners = new HashMap<>();
