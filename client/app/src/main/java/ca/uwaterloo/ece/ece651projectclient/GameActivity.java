@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.SurfaceHolder;
@@ -13,6 +14,7 @@ import android.view.View;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Random;
 
 public class GameActivity extends AppCompatActivity implements SurfaceHolder.Callback {
 
@@ -68,11 +70,9 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
         // calculate the dimensions of the compass based upon the drawing canvas
         Canvas canvas = surfaceCompass.getHolder().lockCanvas();
         float centerX = canvas.getWidth() / 2, centerY = canvas.getHeight() / 2;
-        float radius = Math.min(centerX, centerY) * 3 / 4;
-        // configure the drawing paint
-        Paint paint = new Paint();
-        paint.setColor(Color.BLACK);
-        // get the data to be rendered from the balckboard
+        //create the rectF object used to draw compass
+        final RectF oval = new RectF();
+        // get the data to be rendered from the blackboard
         Map<String, PolarCoordinates> othersDeltas =
                 application.getBlackboard().othersDeltas().value();
         Float userOrientation = application.getBlackboard().userOrientation().value();
@@ -81,13 +81,40 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
         // and we're off!
         if (othersDeltas != null && userOrientation != null) {
             for (String name : othersDeltas.keySet()) {
+                // configure the drawing paint
+                Paint paint = new Paint();
+                int randomColor=getRandomColor();
+                paint.setColor(randomColor);
+                //get the relative distance to that player
+                double distance = othersDeltas.get(name).getRho();
+                //normalize distance to within 1000 metres
+                float normalized_distance;
+                if (distance<1000){
+                    normalized_distance=(float) distance/1000;
+                }
+                else{
+                    normalized_distance=1;
+                }
+                //calculate the angle of the compass arc
+                float theta=0;
+                if (normalized_distance==0){
+                    theta=2;
+                }
+                else if (normalized_distance==1){
+                    theta=360;
+                }
+                else if (normalized_distance<=0.5){
+                    theta=360*(1-(normalized_distance/2));
+                }
+                else if (normalized_distance<1){
+                    theta=360*(1-(2*normalized_distance));
+                }
                 // calculate the relative angle to the other player (in radians)
                 float bearing = othersDeltas.get(name).getPhi();
-                double relativeAngleRadians = Math.toRadians(90 - (bearing - userOrientation));
-                // draw the compass line pointing towards the other player
-                float endX = (float) (centerX + radius * Math.cos(relativeAngleRadians));
-                float endY = (float) (centerY - radius * Math.sin(relativeAngleRadians));
-                canvas.drawLine(centerX, centerY, endX, endY, paint);
+                float relativeAngleDegrees = 90 - (bearing - userOrientation);
+                // draw the compass arc pointing towards the other player
+                oval.set((float)(centerX-normalized_distance)*(3/4),(float)(centerY-normalized_distance)*(3/4),(float)(centerX+normalized_distance)*(3/4),(float)(centerY+normalized_distance)*(3/4));
+                canvas.drawArc(oval, relativeAngleDegrees-theta, 2*theta, true, paint);
                 //canvas.drawText(name, endX, endY, paint);
             }
         }
@@ -98,6 +125,18 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
     public void onDebugClick(View view) {
         Intent intent = new Intent(this, DataViewActivity.class);
         startActivity(intent);
+    }
+
+    //generate a random color
+    public int getRandomColor(){
+        Random rand = new Random();
+
+        int r = rand.nextInt(255);
+        int g = rand.nextInt(255);
+        int b = rand.nextInt(255);
+        int randomColor = Color.rgb(r,g,b);
+
+        return randomColor;
     }
 
 }
