@@ -85,6 +85,7 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
                 Paint paint = new Paint();
                 int randomColor=getRandomColor();
                 paint.setColor(randomColor);
+
                 //get the relative distance to that player
                 double distance = othersDeltas.get(name).getRho();
                 //normalize distance to within 1000 metres
