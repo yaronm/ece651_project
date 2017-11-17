@@ -18,7 +18,7 @@ public class ConcreteBlackboard implements Blackboard {
         return currentActivity;
     }
 
-    private final BlackboardData<String> currentGameId = new BlackboardData<>("");
+    private final BlackboardData<String> currentGameId = new BlackboardData<>(null);
 
     @Override
     public BlackboardData<String> currentGameId() {
@@ -78,7 +78,7 @@ public class ConcreteBlackboard implements Blackboard {
         return userLocation;
     }
 
-    private final BlackboardData<String> userName = new BlackboardData<>("");
+    private final BlackboardData<String> userName = new BlackboardData<>(null);
 
     @Override
     public BlackboardData<String> userName() {
@@ -99,16 +99,16 @@ public class ConcreteBlackboard implements Blackboard {
         return userTaggedBy;
     }
 
-    private final BlackboardData<Map<String, Set<String>>> visibilityMatrix = new
-            BlackboardData<Map<String, Set<String>>>(new HashMap<String, Set<String>>());
+    private final BlackboardData<VisibilityMatrix> visibilityMatrix = new
+            BlackboardData<>(null);
 
     @Override
-    public BlackboardData<Map<String, Set<String>>> visibilityMatrix() {
+    public BlackboardData<VisibilityMatrix> visibilityMatrix() {
         return visibilityMatrix;
     }
 
     private final BlackboardData<VisibilityMatrixType> visibilityMatrixType = new
-            BlackboardData<>(VisibilityMatrixType.CUSTOM);
+            BlackboardData<>(VisibilityMatrixType.HIDE_N_SEEK);
 
     @Override
     public BlackboardData<VisibilityMatrixType> visibilityMatrixType() {

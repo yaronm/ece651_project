@@ -79,7 +79,7 @@ public interface Blackboard {
     /**
      * @return the visibility matrix of the current game
      */
-    public BlackboardData<Map<String, Set<String>>> visibilityMatrix();
+    public BlackboardData<VisibilityMatrix> visibilityMatrix();
 
     /**
      * @return the type of the visibility matrix of the current game
