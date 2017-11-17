@@ -7,183 +7,145 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.util.Log;
 
-import java.util.Date;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
- * Created by Terry on 2017/10/19.
- * @author Chen XU and Haoyuan Zhang
- * This class is for getting and updating orientation of user
- *
- * * Methods:
- * 1. setOrientation(); //initialize sensor manger and listener
- * This method can start monitor changes of user orientation
- * Create a instance of sensor manager and orientation listener;
- *
- * 2. void updateOrientation(); //update our orientation
- * Update orientation of user to the blackboard;
- *
- * 3. void calculateOrientation(); //toos for calculating orientation
- *
- * 4.delete Listener();
- * close listener service;
+ * Game logic class for handling changes in device orientation.
  */
-
 public class GameLogicOrientation {
 
-    //variables for initialization
-    private Blackboard blackboard;
-    private Context userContext;
-
-    //variables for orientation sensor
-    private float orientation;
-    private float neworientation;
-    private SensorManager mSensorManager;
-    private Sensor accelerometer; // accelerate sensor
-    private Sensor magnetic; // magnetic sensor
-    private float[] accelerometerValues = new float[3];
-    private float[] magneticFieldValues = new float[3];
-
-    private Date currentTime;
-    private Date endTime;
-    private long gameTime;
-
-    //set parameters
-    /**
-     * This is constructor of class GameLogicOrientation
-     * */
-    public GameLogicOrientation(Context userContext, Blackboard blackboard) {
-        this.userContext = userContext;
-        this.blackboard = blackboard;
-    }
-
+    private static final String TAG = "GLOrient";
 
     /**
-     * initialize orientation
-     * */
-    public void setOrientation() {
-
-        //create instance for sensor manager
-        mSensorManager = (SensorManager) userContext.getSystemService(Context.SENSOR_SERVICE);
-        //initialize accelerate sensor
-        accelerometer = mSensorManager
-                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        //initialize magnetic sensor
-        magnetic = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
-
-        // register listener
-        mSensorManager.registerListener(new MySensorEventListener(),
-                accelerometer, Sensor.TYPE_ACCELEROMETER);
-        mSensorManager.registerListener(new MySensorEventListener(), magnetic,
-                Sensor.TYPE_MAGNETIC_FIELD);
-        calculateOrientation();
-    }
-
-    /**
-     * This method is for calculating orientation
+     * Creates an orientation game logic component.
      *
+     * @param blackboard a blackboard
+     * @param context    a application context for accessing device sensors; if null, component will
+     *                   expect to receive sensor updates via direct method invocation
      */
-    public void calculateOrientation() {
-        //calculate orientation
-        float[] values = new float[3];
-        float[] R = new float[9];
-        SensorManager.getRotationMatrix(R, null, accelerometerValues,
-                magneticFieldValues);
-        SensorManager.getOrientation(R, values);
-        neworientation = (float) Math.toDegrees(values[0]);
-        if(Math.abs(neworientation-orientation)>=5) {
-            updateOrientation();
-            Log.d("orientation", "orientation: " + orientation);
-            // only update the old orientation when a new one is updated to the blackboard
-            orientation = neworientation;
-        }
-    }
-
-
-    /**
-     * update orientation
-     * */
-    public void updateOrientation() {
-
-        blackboard.userOrientation().set(neworientation);
-    }
-
-    /**
-    * delete Listener
-    */
-    public void deleteListener() {
-        mSensorManager.unregisterListener(new MySensorEventListener());
-    }
-
-    /**
-     * tools for sensor listener
-     * */
-    class MySensorEventListener implements SensorEventListener {
-
-        @Override
-        public void onSensorChanged(SensorEvent event) {
-            // TODO Auto-generated method stub
-            if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-                accelerometerValues = event.values;
-            }
-            if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-                magneticFieldValues = event.values;
-            }
-            calculateOrientation();
-        }
-
-        @Override
-        public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-        }
-    }
-
-
-
-     /**
-     * initialization
-     */
-
-    public void initialization(){
-        while (blackboard.gameState().value() != GameState.RUNNING){
-
-        }
-        setOrientation();
-        timer();
-        blackboard.gameEndTime().addObserver(new Observer() {
+    GameLogicOrientation(final Blackboard blackboard, Context context) {
+        // store blackboard
+        this.blackboard = blackboard;
+        // get the sensor manager from the given context
+        manager = context == null ? null :
+                (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
+        // configure component to listen for game state changes
+        blackboard.gameState().addObserver(new Observer() {
             @Override
             public void update(Observable o, Object arg) {
-                Log.i("location", "Observed that end time has been updated");
-                timer();
+                // get the game state
+                GameState state = blackboard.gameState().value();
+                // enable sensors only when the game is in the RUNNING state
+                switch (state) {
+                    case RUNNING:
+                        enableOrientation();
+                        break;
+                    default:
+                        disableOrientation();
+                        break;
+                }
             }
         });
     }
+
+    private Blackboard blackboard;
+
+    private SensorManager manager;
+    private SensorEventListener listener;
+
+    private float[] accelerometerValues = new float[3], magneticFieldValues = new float[3];
+
     /**
-     * timer
+     * Sets the accelerometer values for orientation calculation.
      */
+    void setAccelerometerValues(float[] accelerometerValues) {
+        this.accelerometerValues = accelerometerValues;
+    }
 
-    public void timer(){
-        endTime = blackboard.gameEndTime().value();
-        currentTime = new Date();
-        gameTime = endTime.getTime() - currentTime.getTime();
-        Timer timer = new Timer();
-        TimerTask task = new TimerTask() {
+    /**
+     * Sets the magnetic field values for orientation calculation.
+     */
+    void setMagneticFieldValues(float[] magneticFieldValues) {
+        this.magneticFieldValues = magneticFieldValues;
+    }
+
+    /**
+     * Enables orientation sensor updates to the blackboard.
+     */
+    private void enableOrientation() {
+        // check that the sensor manager is available
+        if (manager == null) {
+            Log.d(TAG, "Could not enable orientation sensors: sensor manager is null");
+            return;
+        }
+        // clear previous listeners
+        disableOrientation();
+        // create a new listener
+        listener = new SensorEventListener() {
             @Override
-            public void run() {
-                Log.d("location","orientation listener has been closed");
-                deleteListener();
+            public void onSensorChanged(SensorEvent event) {
+                if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+                    accelerometerValues = event.values;
+                }
+                if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+                    magneticFieldValues = event.values;
+                }
+                updateOrientation();
             }
-        };
-        timer.schedule(task,gameTime);
 
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+        };
+        // get accelerometer sensor
+        Sensor accelerometer = manager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        if (accelerometer == null) {
+            Log.d(TAG, "Could not enable orientation sensors: could not get accelerometer");
+            return;
+        }
+        // get magnetic sensor
+        Sensor magnetic = manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        if (magnetic == null) {
+            Log.d(TAG, "Could not enable orientation sensors: could not get magnetic field");
+            return;
+        }
+        // register listeners
+        manager.registerListener(listener, accelerometer, SensorManager.SENSOR_DELAY_UI);
+        manager.registerListener(listener, magnetic, SensorManager.SENSOR_DELAY_UI);
+    }
+
+    /**
+     * Disables orientation sensor updates.
+     */
+    private void disableOrientation() {
+        // check that the sensor manager is available
+        if (manager == null) {
+            Log.d(TAG, "Could not disable orientation sensors: sensor manager is null");
+            return;
+        }
+        // disable sensor event listening
+        if (listener != null) {
+            manager.unregisterListener(listener);
+        }
+    }
+
+    /**
+     * Updates the device's orientation from the stored accelerometer and magnetic field values
+     * and updated the results to the blackboard.
+     */
+    void updateOrientation() {
+        // calculate the new orientation
+        float[] values = new float[3];
+        float[] R = new float[9];
+        SensorManager.getRotationMatrix(R, null, accelerometerValues, magneticFieldValues);
+        SensorManager.getOrientation(R, values);
+        float newOrientation = (float) Math.toDegrees(values[0]);
+        // check that the new orientation an update on the previous orientation
+        float previousOrientation = blackboard.userOrientation().value();
+        if (Math.abs(newOrientation - previousOrientation) >= 5) {
+            // if it is, update the new orientation to the blackboard
+            blackboard.userOrientation().set(newOrientation);
+        }
     }
 
 }
-
-
-
-
-
