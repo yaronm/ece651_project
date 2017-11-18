@@ -15,11 +15,13 @@ public class BlackboardApplication extends Application {
         super.onCreate();
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         blackboard = new ConcreteBlackboard();
-        FirebaseLogin login = new FirebaseLogin(blackboard, database);
-        FirebaseCreateGame createGame = new FirebaseCreateGame(blackboard, database);
-        FirebaseJoinGame joinGame = new FirebaseJoinGame(blackboard, database);
-        GameLogicLocation gLLocation = new GameLogicLocation(this, blackboard);
-        GameLogicOrientation gLOrientation = new GameLogicOrientation(this, blackboard);
+        new FirebaseLogin(blackboard, database);
+        new FirebaseCreateGame(blackboard, database);
+        new FirebaseJoinGame(blackboard, database);
+        new FirebaseRunGame(blackboard, database);
+        new GameLogicOrientation(blackboard, this);
+        new GameLogicLocation(blackboard, this);
+        new GameLogicDeltas(blackboard);
     }
 
     private Blackboard blackboard;

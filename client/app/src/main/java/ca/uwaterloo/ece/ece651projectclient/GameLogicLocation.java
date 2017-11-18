@@ -1,35 +1,4 @@
 package ca.uwaterloo.ece.ece651projectclient;
-/**
- * This class is for connection logic.
- * a. Get user location and orientation to update
- * b. Get other locations
- * c. compute deltas and update
- *
- * Created by Chen XU and Haoyuan Zhang on 2017/10/18.
- * @author Chen XU and Haoyuan Zhang
- *
- * Constructor
- * ConnectionLogic(Activity current_activity, Blackboard blackboard, String myname)();
- * @param Activity current_activity
- * @param Blackboard blackboard
- *
- *
- * Methods:
- * 1. void getOurLocation(); //start location service
- * This method can start monitor changes of user location
- * Create a instance of location manager and location listener;
- *
- * 2. void updateLocation(); //update our location
- * Update location of user to the blackboard;
- *
- * 3. void readOtherLocation(); //download other locations, compute deltas and update
- * Monitor and read other users locations from blackboard
- * Call computeDeltas(); to compute deltas
- * Update deltas to the blackboard;
- *
- * 4.deleteListener();
- * close listener service;
- */
 
 import android.Manifest;
 import android.app.Activity;
@@ -43,129 +12,135 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Timer;
-import java.util.TimerTask;
 
+/**
+ * Game logic class for handling changes in location.
+ */
 class GameLogicLocation {
 
-    //variables for initialization
-    private Blackboard blackboard;
-    private Context userContext;
-    private Activity current_activity;
-    private Date currentTime;
-    private Date endTime;
-    private long gameTime;
+    private static final String TAG = "GLLocation";
 
-
-    //variables for location
-    private LocationManager locationManager;
-    private String provider;
-
-    //set parameters
     /**
-     * This is constructor of class GameLogicLocation
-     * */
-    public GameLogicLocation(Context userContext, Blackboard blackboard) {
-        this.userContext = userContext;
+     * Creates a location game logic component.
+     *
+     * @param blackboard a blackboard
+     * @param context    a application context for accessing device location; if null, component
+     *                   will expect to receive location updates via direct method invocation
+     */
+    public GameLogicLocation(final Blackboard blackboard, Context context) {
+        // store blackboard and context
         this.blackboard = blackboard;
-        initialization();
+        this.context = context;
+        // get the location manager from the given context
+        manager = context == null ? null :
+                (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        // configure component to listen for game state changes
+        blackboard.gameState().addObserver(new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                // get the game state
+                GameState state = blackboard.gameState().value();
+                // enable sensors only when the game is in the RUNNING state
+                switch (state) {
+                    case RUNNING:
+                        enableLocation();
+                        break;
+                    default:
+                        disableLocation();
+                        break;
+                }
+            }
+        });
     }
 
-    /**
-     * get user location
-     * */
-    public void getOurLocation() {
-        // request for GPS permission
-        current_activity = blackboard.currentActivity().value();
-        if (ContextCompat.checkSelfPermission(userContext, Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(current_activity,
-                    new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+    private Blackboard blackboard;
+    private Context context;
 
+    private LocationManager manager;
+    private LocationListener listener;
+
+    /**
+     * Enables location updates to the blackboard.
+     */
+    private void enableLocation() {
+        // check that the location manager is available
+        if (manager == null) {
+            Log.d(TAG, "Could not enable location updates: location manager is null");
+            return;
         }
-        locationManager = (LocationManager) userContext.getSystemService(Context
-                .LOCATION_SERVICE);
-        //choose provider to get locations
-        List<String> providerList = locationManager.getProviders(true);
+        // clear previous listeners
+        disableLocation();
+        // create a new listener
+        listener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                // update the user location
+                updateLocation(location);
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
+
+            @Override
+            public void onProviderEnabled(String provider) {}
+
+            @Override
+            public void onProviderDisabled(String provider) {}
+        };
+        // choose provider to get locations
+        List<String> providerList = manager.getProviders(true);
+        String provider;
         if (providerList.contains(LocationManager.GPS_PROVIDER)) {
             provider = LocationManager.GPS_PROVIDER;
         } else if (providerList.contains(LocationManager.NETWORK_PROVIDER)) {
             provider = LocationManager.NETWORK_PROVIDER;
         } else {
-            Log.i("location", "No location provider to use");
+            Log.i(TAG, "Could not enable location updates: no location provider to use");
             return;
         }
-
-
-        //check whether program has permission to access GPS
-        try {
-            updateLocation(locationManager.getLastKnownLocation(provider));
-            locationManager.requestLocationUpdates(provider, 5000, 1, locationListener);
-        } catch (SecurityException e) {
-            Log.i("location", "no permission to use GPS");
+        Log.i(TAG, "Selected location provider: " + provider);
+        // check that we have permission to access the user location
+        if (ContextCompat.checkSelfPermission(context,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            // check that the current activity is available
+            Activity currentActivity = blackboard.currentActivity().value();
+            if (currentActivity == null) {
+                Log.d(TAG, "Could not enable location updates: current activity is null");
+                return;
+            }
+            // request permissions to access the user location
+            ActivityCompat.requestPermissions(currentActivity,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        }
+        // register location listener
+        if (ContextCompat.checkSelfPermission(context,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            manager.requestLocationUpdates(provider, 5000, 1, listener);
+            updateLocation(manager.getLastKnownLocation(provider));
+        } else {
+            Log.d(TAG, "Could not enable location updates: location permissions not given");
+            return;
         }
     }
 
     /**
-     * get other location
-     * */
-    public void readOtherLocation() {
-        // as the game logic, observe the blackboard for changes to the other players locations
-        blackboard.othersLocations().addObserver(new Observer() {
-            @Override
-            public void update(Observable o, Object arg) {
-                Log.i("location", "Observed that othersLocations blackboard field has been " +
-                        "updated");
-                // if the other players locations are updated, recompute their deltas
-                computeDeltas();
-            }
-        });
-        // also observe the blackboard for changes to the user location and also recompute deltas
-        // when it changes
-        blackboard.userLocation().addObserver(new Observer() {
-            @Override
-            public void update(Observable o, Object arg) {
-                Log.i("location", "Observed that userLocation blackboard field has been updated");
-                computeDeltas();
-            }
-        });
-    }
-
-    /**
-     * compute deltas
-     * */
-    public void computeDeltas() {
-        // get the other players locations from the blackboard
-        Map<String, Location> othersLocations = blackboard.othersLocations().value();
-        // get the other players deltas from the blackboard
-        Map<String, PolarCoordinates> othersDeltas = blackboard.othersDeltas().value();
-        // clear the deltas (because we are about to recompute them)
-        othersDeltas.clear();
-
-        // recompute the deltas
-
-        float distance;
-        float bearing;
-        Location one_person_location;
-        // get the most-up-to-date user name irectly from the blackboard
-        Location userLocation = blackboard.userLocation().value();
-        // check that the user location is non-null before computing deltas; computing deltas when
-        // the user location is undefined does not make sense
-        if (userLocation != null)
-            for (String otherName : othersLocations.keySet()) {
-                one_person_location=othersLocations.get(otherName);
-                distance = userLocation. distanceTo(one_person_location);
-                bearing = userLocation. bearingTo(one_person_location);
-                othersDeltas.put(otherName, new PolarCoordinates(distance, bearing));
-            }
-        // update the blackboard with those new deltas
-        Log.i("location", "Updated othersDeltas blackboard field");
-        blackboard.othersDeltas().set(othersDeltas);
+     * Disables location updates to the blackboard.
+     */
+    private void disableLocation() {
+        // check that the location manager is available
+        if (manager == null) {
+            Log.d(TAG, "Could not enable location updates: location manager is null");
+            return;
+        }
+        // diable location listener
+        if (listener != null) {
+            manager.removeUpdates(listener);
+        }
     }
 
     /**
@@ -174,98 +149,8 @@ class GameLogicLocation {
      * @param location the location to pass to the blackboard
      */
     public void updateLocation(Location location) {
-        // update the blackboard with  new locations
-        Log.i("location", "Updated location to the blackboard field");
+        // update the blackboard with a new location
         blackboard.userLocation().set(location);
-    }
-
-
-    /**
-     * Timer
-     */
-    public void timer(){
-        endTime = blackboard.gameEndTime().value();
-        currentTime = new Date();
-        gameTime = endTime.getTime() - currentTime.getTime();
-        Timer timer = new Timer();
-        TimerTask task = new TimerTask() {
-            @Override
-            public void run() {
-                Log.d("location","location listener has been closed");
-                deleteListener();
-            }
-        };
-        timer.schedule(task,gameTime);
-
-    }
-    /**
-     * delete Listener
-     */
-    public void deleteListener() {
-
-        locationManager.removeUpdates(locationListener);
-    }
-
-
-    LocationListener locationListener = new LocationListener() {
-        @Override
-        public void onLocationChanged(Location location) {
-            updateLocation(location);
-        Log.d("location","latitude is: "+location.getLatitude()+"longitude is: "+location.getLongitude());
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-
-        }
-    };
-
-    /**
-     * observer the state
-     */
-    public void gameState() {
-        blackboard.gameState().addObserver(new Observer() {
-            @Override
-            public void update(Observable o, Object arg) {
-                Log.i("location", "Observed that game state has been updated");
-                    if(blackboard.gameState().value()==GameState.RUNNING){
-                        getOurLocation();
-
-                     }
-                    else if(blackboard.gameState().value()==GameState.PAUSED){
-                        locationManager.removeUpdates(locationListener);
-                    }
-
-            }
-        });
-    }
-    /**
-     * initialization
-     */
-    public void initialization(){
-        while (blackboard.gameState().value() != GameState.RUNNING){
-
-        }
-        getOurLocation();
-        readOtherLocation();
-        gameState();
-        blackboard.gameEndTime().addObserver(new Observer() {
-            @Override
-            public void update(Observable o, Object arg) {
-                Log.i("location", "Observed that end time has been updated");
-                timer();
-            }
-        });
     }
 
 }
