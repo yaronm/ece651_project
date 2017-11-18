@@ -1,0 +1,34 @@
+{
+    "games": {
+        "test": {
+            "numberOfPlayers": 3,
+            "players": {
+                "user": true,
+                "clv": true,
+                "eit": true
+            },
+            "visibility": {
+                "matrix": {
+                    "user": {
+                        "clv": true,
+                        "eit": true
+                    }
+                }
+            }
+        }
+    },
+    "users": {
+        "clv": {
+            "location": {
+                "latitude": 43.470787,
+                "longitude": -80.562446
+            }
+        },
+        "eit": {
+            "location": {
+                "latitude": 43.471425,
+                "longitude": -80.542092
+            }
+        }
+    }
+}
