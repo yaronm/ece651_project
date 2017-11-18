@@ -21,6 +21,7 @@ public class BlackboardApplication extends Application {
         new FirebaseRunGame(blackboard, database);
         new GameLogicOrientation(blackboard, this);
         new GameLogicLocation(blackboard, this);
+        new GameLogicDeltas(blackboard);
     }
 
     private Blackboard blackboard;
