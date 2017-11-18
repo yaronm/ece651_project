@@ -20,7 +20,7 @@ public class BlackboardApplication extends Application {
         new FirebaseJoinGame(blackboard, database);
         new FirebaseRunGame(blackboard, database);
         new GameLogicOrientation(blackboard, this);
-        //GameLogicLocation gLLocation = new GameLogicLocation(this, blackboard);
+        new GameLogicLocation(blackboard, this);
     }
 
     private Blackboard blackboard;
