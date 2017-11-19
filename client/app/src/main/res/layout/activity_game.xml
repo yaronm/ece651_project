@@ -39,6 +39,19 @@
         android:layout_marginBottom="8dp"
         android:onClick="onPauseClick"
         android:text="PAUSE  "
+        app:layout_constraintBottom_toTopOf="@+id/buttonTagged"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <Button
+        android:id="@+id/buttonTagged"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginStart="16dp"
+        android:onClick="onTaggedClick"
+        android:text="I've been tagged!"
         app:layout_constraintBottom_toTopOf="@+id/buttonDebug"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"/>

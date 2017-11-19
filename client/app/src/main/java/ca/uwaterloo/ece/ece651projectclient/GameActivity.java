@@ -138,6 +138,11 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
     }
     }
 
+    public void onTaggedClick(View view) {
+        Intent intent = new Intent(this, TaggedActivity.class);
+        startActivity(intent);
+    }
+
     public void onDebugClick(View view) {
         Intent intent = new Intent(this, DataViewActivity.class);
         startActivity(intent);
