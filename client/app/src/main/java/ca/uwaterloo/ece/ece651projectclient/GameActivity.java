@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -70,8 +71,6 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
         // calculate the dimensions of the compass based upon the drawing canvas
         Canvas canvas = surfaceCompass.getHolder().lockCanvas();
         float centerX = canvas.getWidth() / 2, centerY = canvas.getHeight() / 2;
-        //create the rectF object used to draw compass
-        final RectF oval = new RectF();
         // get the data to be rendered from the blackboard
         Map<String, PolarCoordinates> othersDeltas =
                 application.getBlackboard().othersDeltas().value();
@@ -83,40 +82,37 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
             for (String name : othersDeltas.keySet()) {
                 // configure the drawing paint
                 Paint paint = new Paint();
-                int randomColor=getRandomColor();
-                paint.setColor(randomColor);
+                Random random = new Random(name.hashCode());
+                paint.setColor(random.nextInt() | 0xff000000);
 
-                //get the relative distance to that player
-                double distance = othersDeltas.get(name).getRho();
-                //normalize distance to within 1000 metres
-                float normalized_distance;
-                if (distance<1000){
-                    normalized_distance=(float) distance/1000;
+                // get the relative distance to that player
+                float distance = othersDeltas.get(name).getRho();
+                // interpolate the distance between the lower and upper distance bounds
+                float lowerBound = 100, upperBound = 1000;
+                float interpolation;
+                if (distance < lowerBound) {
+                    interpolation = 0;
+                } else if (distance > upperBound) {
+                    interpolation = 1;
+                } else {
+                    interpolation = (distance - lowerBound) / (upperBound - lowerBound);
                 }
-                else{
-                    normalized_distance=1;
-                }
-                //calculate the angle of the compass arc
-                float theta=0;
-                if (normalized_distance==0){
-                    theta=2;
-                }
-                else if (normalized_distance==1){
-                    theta=360;
-                }
-                else if (normalized_distance<=0.5){
-                    theta=360*(1-(normalized_distance/2));
-                }
-                else if (normalized_distance<1){
-                    theta=360*(1-(2*normalized_distance));
-                }
+
+                // calculate the angle of the compass arc
+                float minTheta = 5, maxTheta = 360;
+                float theta = (maxTheta - minTheta) * (1 - interpolation) + minTheta;
+                // calculate the radius of the compass arc
+                float minRadius = Math.min(centerX, centerY) * 3 / 10,
+                        maxRadius = Math.min(centerX, centerY) * 9 / 10;
+                float radius = (maxRadius - minRadius) * interpolation + minRadius;
+
                 // calculate the relative angle to the other player (in radians)
                 float bearing = othersDeltas.get(name).getPhi();
-                float relativeAngleDegrees = 90 - (bearing - userOrientation);
+                float relativeAngleDegrees = bearing - userOrientation - 90;
                 // draw the compass arc pointing towards the other player
-                oval.set((float)(centerX-normalized_distance)*(3/4),(float)(centerY-normalized_distance)*(3/4),(float)(centerX+normalized_distance)*(3/4),(float)(centerY+normalized_distance)*(3/4));
-                canvas.drawArc(oval, relativeAngleDegrees-theta, 2*theta, true, paint);
-                //canvas.drawText(name, endX, endY, paint);
+                RectF bounds = new RectF(centerX - radius, centerY - radius,
+                        centerX + radius, centerY + radius);
+                canvas.drawArc(bounds, relativeAngleDegrees - theta / 2, theta, true, paint);
             }
         }
         // release the canvas
@@ -126,18 +122,6 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
     public void onDebugClick(View view) {
         Intent intent = new Intent(this, DataViewActivity.class);
         startActivity(intent);
-    }
-
-    //generate a random color
-    public int getRandomColor(){
-        Random rand = new Random();
-
-        int r = rand.nextInt(255);
-        int g = rand.nextInt(255);
-        int b = rand.nextInt(255);
-        int randomColor = Color.rgb(r,g,b);
-
-        return randomColor;
     }
 
 }
