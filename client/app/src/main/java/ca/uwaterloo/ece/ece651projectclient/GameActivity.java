@@ -7,7 +7,6 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -123,19 +122,22 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
     }
 
     public void onPauseClick(View view){
-    boolean checked = ((Switch)view).isChecked();
+        // get whether the pause switch is checked
+        boolean checked = ((Switch) view).isChecked();
+        // get the game state from the blackboard
+        GameState gameState = application.getBlackboard().gameState().value();
 
-    if (checked){
-        application.getBlackboard().gameState().set(GameState.PAUSED);
-        Toast toast = Toast.makeText(getApplicationContext(),"GAME PAUSED",Toast.LENGTH_SHORT);
-        toast.setGravity(Gravity.CENTER_VERTICAL,0,0);
-        toast.show();
-    }else{
-        Toast toast = Toast.makeText(getApplicationContext(),"GAME RESUMED",Toast.LENGTH_SHORT);
-        toast.setGravity(Gravity.CENTER_VERTICAL,0,0);
-        toast.show();
-        application.getBlackboard().gameState().set(GameState.RUNNING);
-    }
+        if (checked && gameState == GameState.RUNNING) {
+            application.getBlackboard().gameState().set(GameState.PAUSED);
+            Toast toast = Toast.makeText(getApplicationContext(), "GAME PAUSED", Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+            toast.show();
+        } else if (!checked && gameState == GameState.PAUSED) {
+            Toast toast = Toast.makeText(getApplicationContext(), "GAME RESUMED", Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+            toast.show();
+            application.getBlackboard().gameState().set(GameState.RUNNING);
+        }
     }
 
     public void onTaggedClick(View view) {
