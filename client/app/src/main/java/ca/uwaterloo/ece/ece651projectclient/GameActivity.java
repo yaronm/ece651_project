@@ -14,6 +14,10 @@ import android.view.View;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
@@ -74,14 +78,27 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
         Canvas canvas = surfaceCompass.getHolder().lockCanvas();
         float centerX = canvas.getWidth() / 2, centerY = canvas.getHeight() / 2;
         // get the data to be rendered from the blackboard
-        Map<String, PolarCoordinates> othersDeltas =
+        final Map<String, PolarCoordinates> othersDeltas =
                 application.getBlackboard().othersDeltas().value();
         Float userOrientation = application.getBlackboard().userOrientation().value();
         // clear the canvas
         canvas.drawColor(Color.WHITE);
         // and we're off!
         if (othersDeltas != null && userOrientation != null) {
-            for (String name : othersDeltas.keySet()) {
+            //sort the distances of all other players
+            final List<String> sortedNames = new ArrayList<>(othersDeltas.keySet());
+            Collections.sort(sortedNames, new Comparator<String>() {
+                @Override
+                public int compare(String s, String t1) {
+                    if (othersDeltas.get(s).getRho() > othersDeltas.get(t1).getRho()) {
+                        return -1;
+                    } else if (othersDeltas.get(s).getRho() == othersDeltas.get(t1).getRho()) {
+                        return 1;
+                    } else
+                        return 0;
+                }
+            });
+            for (String name : sortedNames) {
                 // configure the drawing paint
                 Paint paint = new Paint();
                 Random random = new Random(name.hashCode());
