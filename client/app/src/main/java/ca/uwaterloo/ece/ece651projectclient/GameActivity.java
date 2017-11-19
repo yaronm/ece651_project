@@ -8,9 +8,12 @@ import android.graphics.RectF;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.Switch;
+import android.widget.Toast;
 
 import java.util.Map;
 import java.util.Observable;
@@ -117,6 +120,22 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }
         // release the canvas
         surfaceCompass.getHolder().unlockCanvasAndPost(canvas);
+    }
+
+    public void onPauseClick(View view){
+    boolean checked = ((Switch)view).isChecked();
+
+    if (checked){
+        application.getBlackboard().gameState().set(GameState.PAUSED);
+        Toast toast = Toast.makeText(getApplicationContext(),"GAME PAUSED",Toast.LENGTH_SHORT);
+        toast.setGravity(Gravity.CENTER_VERTICAL,0,0);
+        toast.show();
+    }else{
+        Toast toast = Toast.makeText(getApplicationContext(),"GAME RESUMED",Toast.LENGTH_SHORT);
+        toast.setGravity(Gravity.CENTER_VERTICAL,0,0);
+        toast.show();
+        application.getBlackboard().gameState().set(GameState.RUNNING);
+    }
     }
 
     public void onDebugClick(View view) {
