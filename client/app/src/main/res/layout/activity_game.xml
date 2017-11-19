@@ -9,7 +9,7 @@
     <SurfaceView
         android:id="@+id/surfaceCompass"
         android:layout_width="0dp"
-        android:layout_height="395dp"
+        android:layout_height="0dp"
         android:layout_marginBottom="8dp"
         android:layout_marginLeft="16dp"
         android:layout_marginRight="16dp"
@@ -17,7 +17,7 @@
         app:layout_constraintBottom_toTopOf="@+id/switch1"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"/>
 
     <Button
         android:id="@+id/buttonDebug"
@@ -37,9 +37,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:text="PAUSE  "
         android:onClick="onPauseClick"
+        android:text="PAUSE  "
         app:layout_constraintBottom_toTopOf="@+id/buttonDebug"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"/>
 </android.support.constraint.ConstraintLayout>
