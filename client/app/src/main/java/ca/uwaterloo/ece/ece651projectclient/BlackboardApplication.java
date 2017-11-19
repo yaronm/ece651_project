@@ -22,6 +22,7 @@ public class BlackboardApplication extends Application {
         new GameLogicOrientation(blackboard, this);
         new GameLogicLocation(blackboard, this);
         new GameLogicDeltas(blackboard);
+        new GameLogicTimer(blackboard);
     }
 
     private Blackboard blackboard;

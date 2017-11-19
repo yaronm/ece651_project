@@ -12,6 +12,7 @@ import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
@@ -68,6 +69,7 @@ public class FirebaseRunGame {
     private ValueEventListener playersListener;
     private Map<String, ValueEventListener> locationListeners;
     private ValueEventListener visibilityListener;
+    private ValueEventListener endGameListener;
 
     private Observer locationObserver;
     private Observer taggedObserver;
@@ -211,6 +213,22 @@ public class FirebaseRunGame {
                     @Override
                     public void onCancelled(DatabaseError databaseError) {}
                 });
+
+        // start listening for the end game time
+       endGameListener = database.child("games").child(currentGameId).child("endtime")
+               .addValueEventListener(new ValueEventListener() {
+                   @Override
+                   public void onDataChange(DataSnapshot dataSnapshot) {
+                       // update the blackboard's end time to match
+                       Long epoc = dataSnapshot.getValue(Long.class);
+                       if (epoc != null) {
+                           blackboard.gameEndTime().set(new Date(epoc));
+                       }
+                   }
+
+                   @Override
+                   public void onCancelled(DatabaseError databaseError) {}
+               });
         return true;
     }
 
