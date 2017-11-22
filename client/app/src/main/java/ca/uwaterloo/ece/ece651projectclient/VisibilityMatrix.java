@@ -69,7 +69,7 @@ public class VisibilityMatrix {
      * @param matrix a mapping of visibilities
      */
     public VisibilityMatrix(Map<String, Set<String>> matrix) {
-        this(matrix, null);
+        this(matrix, null, null);
     }
 
     /**
@@ -78,16 +78,22 @@ public class VisibilityMatrix {
      *
      * @param matrix     a mapping of visibilities
      * @param unassigned a set of names that have not yet been assigned players
+     * @param out        the set of players that have been tagged out
      */
-    public VisibilityMatrix(Map<String, Set<String>> matrix, Set<String> unassigned) {
+    public VisibilityMatrix(Map<String, Set<String>> matrix, Set<String> unassigned,
+                            Set<String> out) {
         this.matrix = matrix;
         if (unassigned != null) {
             this.unassigned.addAll(unassigned);
+        }
+        if (out != null) {
+            this.out.addAll(out);
         }
     }
 
     private Map<String, Set<String>> matrix = new HashMap<>();
     private Set<String> unassigned = new HashSet<>();
+    private Set<String> out = new HashSet<>();
 
     /**
      * Gets a map representing this visibility matrix. The returned map is backed by this
@@ -144,17 +150,20 @@ public class VisibilityMatrix {
     }
 
     /**
-     * Transfers one player's targets to another player's. Upon completion, the source player
-     * will have no targets.
+     * Records that one player has tagged another.
      *
-     * @param src the player from which targets should be transferred
-     * @param dst the player to which the targets should be transferred
+     * @param tagger the tagging player
+     * @param tagged the tagged player
      */
-    public void transferTargets(String src, String dst) {
-        Set<String> toTransfer = matrix.remove(src);
+    public void tag(String tagger, String tagged) {
+        Set<String> toTransfer = matrix.remove(tagged);
         if (toTransfer != null) {
-            matrix.get(dst).addAll(toTransfer);
+            matrix.get(tagger).addAll(toTransfer);
         }
+        for (Set<String> visibility : matrix.values()) {
+            visibility.remove(tagged);
+        }
+        out.add(tagged);
     }
 
     /**
@@ -183,6 +192,7 @@ public class VisibilityMatrix {
         visibility.put("matrix", matrix);
         visibility.put("unassigned",
                 unassigned.isEmpty() ? null : FirebaseUtils.setToMap(unassigned, true));
+        visibility.put("out", out.isEmpty() ? null : FirebaseUtils.setToMap(out, true));
         return visibility;
     }
 
@@ -201,7 +211,11 @@ public class VisibilityMatrix {
         if (map.containsKey("unassigned")) {
             unassigned = ((Map<String, ?>) map.get("unassigned")).keySet();
         }
-        return new VisibilityMatrix(matrix, unassigned);
+        Set<String> out = null;
+        if (map.containsKey("out")) {
+            out = ((Map<String, ?>) map.get("out")).keySet();
+        }
+        return new VisibilityMatrix(matrix, unassigned, out);
     }
 
 }

@@ -6,7 +6,6 @@ import android.util.Log;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
@@ -121,7 +120,7 @@ public class FirebaseRunGame {
                         // assign the tagged player's target(s) to the tagger
                         VisibilityMatrix visibilityMatrix = VisibilityMatrix
                                 .fromFirebaseSerializableMap(visibility);
-                        visibilityMatrix.transferTargets(userName, tagger);
+                        visibilityMatrix.tag(tagger, userName);
                         mutableData.child("visibility").setValue(
                                 visibilityMatrix.asFirebaseSerializableMap());
 
@@ -138,9 +137,6 @@ public class FirebaseRunGame {
                             return;
                         }
 
-                        // finish tag by recording that the user was tagged
-                        database.child("games").child(currentGameId).child("out").child(userName)
-                                .setValue(true);
                         // and set the user to the OUT game state
                         blackboard.gameState().set(GameState.OUT);
                     }
