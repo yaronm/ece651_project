@@ -85,6 +85,12 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
         application.getBlackboard().currentActivity().set(this);
     }
 
+    @Override
+    public void onBackPressed() {
+        application.getBlackboard().gameState().set(GameState.UNINITIALIZED);
+        finish();
+    }
+
     BlackboardApplication application;
     SurfaceView surfaceCompass;
 
