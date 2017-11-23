@@ -1,17 +1,22 @@
 package ca.uwaterloo.ece.ece651projectclient;
 
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Set;
 
 public class SelectGameActivity extends AppCompatActivity {
@@ -23,23 +28,34 @@ public class SelectGameActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_select_game);
         application = (BlackboardApplication) getApplication();
-
+        // populate the available games spinner
+        application.getBlackboard().availableGames().addObserver(new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                List<String> availableGameList = new ArrayList<>(
+                        application.getBlackboard().availableGames().value());
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(SelectGameActivity.this,
+                                android.R.layout.simple_spinner_item, availableGameList);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                Spinner availableGames = (Spinner) findViewById(R.id.spinnerAvailableGames);
+                availableGames.setAdapter(adapter);
+            }
+        });
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        EditText editGameId = (EditText) findViewById(R.id.editGameId);
-        editGameId.setText(application.getBlackboard().currentGameId().value());
     }
 
     BlackboardApplication application;
 
     public void onJoinClick(View view) {
         //Get GameId
-        EditText editGameId = (EditText) findViewById(R.id.editGameId);
+        Spinner availableGames = (Spinner) findViewById(R.id.spinnerAvailableGames);
         // Update GameId to Blackboard
-        application.getBlackboard().currentGameId().set(editGameId.getText().toString());
+        application.getBlackboard().currentGameId().set(
+                availableGames.getSelectedItem().toString());
         //Change Game state to Join Game
         application.getBlackboard().gameState().set(GameState.JOINING);
         //Start Game Activity

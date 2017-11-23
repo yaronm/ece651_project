@@ -11,6 +11,14 @@ import java.util.Set;
 
 public class ConcreteBlackboard implements Blackboard {
 
+    private final BlackboardData<Set<String>> availableGames = new
+            BlackboardData<Set<String>>(new HashSet<String>());
+
+    @Override
+    public BlackboardData<Set<String>> availableGames() {
+        return availableGames;
+    }
+
     private final BlackboardData<Activity> currentActivity = new BlackboardData<>(null);
 
     @Override

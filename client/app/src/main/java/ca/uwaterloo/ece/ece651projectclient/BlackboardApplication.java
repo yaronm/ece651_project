@@ -16,6 +16,7 @@ public class BlackboardApplication extends Application {
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
         blackboard = new ConcreteBlackboard();
         new FirebaseLogin(blackboard, database);
+        new FirebaseUserMetadata(blackboard, database);
         new FirebaseCreateGame(blackboard, database);
         new FirebaseJoinGame(blackboard, database);
         new FirebaseRunGame(blackboard, database);

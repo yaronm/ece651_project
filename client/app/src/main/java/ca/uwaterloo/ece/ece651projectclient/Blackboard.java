@@ -14,6 +14,11 @@ import java.util.Set;
 public interface Blackboard {
 
     /**
+     * @return a set of games available to join
+     */
+    public BlackboardData<Set<String>> availableGames();
+
+    /**
      * @return the currently active activity
      */
     public BlackboardData<Activity> currentActivity();
