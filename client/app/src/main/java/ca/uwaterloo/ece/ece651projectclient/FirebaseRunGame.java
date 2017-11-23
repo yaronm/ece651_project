@@ -24,7 +24,7 @@ import java.util.Set;
  */
 public class FirebaseRunGame {
 
-    private static final String TAG = "FireGameComm";
+    private static final String TAG = "FBRunGame";
 
     /**
      * Initializes a firebase game communication instance and attaches it to the given blackboard.
@@ -263,6 +263,7 @@ public class FirebaseRunGame {
         if (visiblePlayers == null) {
             return true;
         }
+        visiblePlayers.removeAll(visibilityMatrix.getOut());
 
         // start listening to changes to visible players' locations
         disableLocationSynchronization();

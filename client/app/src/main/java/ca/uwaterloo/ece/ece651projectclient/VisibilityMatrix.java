@@ -1,5 +1,6 @@
 package ca.uwaterloo.ece.ece651projectclient;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -118,6 +119,13 @@ public class VisibilityMatrix {
     }
 
     /**
+     * @return the players who have been tagged out
+     */
+    Set<String> getOut() {
+        return Collections.unmodifiableSet(out);
+    }
+
+    /**
      * Assigns a player to one of this visibility matrix's unassigned slots at random. If the player
      * is already in the visibility matrix or if there are no unassigned slots, this method has
      * no effect.
@@ -160,9 +168,6 @@ public class VisibilityMatrix {
         if (toTransfer != null) {
             matrix.get(tagger).addAll(toTransfer);
         }
-        for (Set<String> visibility : matrix.values()) {
-            visibility.remove(tagged);
-        }
         out.add(tagged);
     }
 
@@ -203,9 +208,11 @@ public class VisibilityMatrix {
      */
     public static VisibilityMatrix fromFirebaseSerializableMap(Map<String, Object> map) {
         Map<String, Set<String>> matrix = new HashMap<>(map.size());
-        for (Map.Entry<String, Map<String, ?>> entry :
-                ((Map<String, Map<String, ?>>) map.get("matrix")).entrySet()) {
-            matrix.put(entry.getKey(), new HashSet<String>(entry.getValue().keySet()));
+        if (map.containsKey("matrix")) {
+            for (Map.Entry<String, Map<String, ?>> entry :
+                    ((Map<String, Map<String, ?>>) map.get("matrix")).entrySet()) {
+                matrix.put(entry.getKey(), new HashSet<String>(entry.getValue().keySet()));
+            }
         }
         Set<String> unassigned = null;
         if (map.containsKey("unassigned")) {
