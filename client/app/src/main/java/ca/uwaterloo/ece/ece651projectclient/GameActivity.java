@@ -43,6 +43,40 @@ public class GameActivity extends AppCompatActivity implements SurfaceHolder.Cal
         };
         application.getBlackboard().othersDeltas().addObserver(observer);
         application.getBlackboard().userOrientation().addObserver(observer);
+        // observe the blackboard for important game state changes and present them to the user
+        application.getBlackboard().gameState().addObserver(new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                // get the game state from the blackboard
+                GameState state = application.getBlackboard().gameState().value();
+                // display the appropriate message
+                Toast toast;
+                switch (state) {
+                    case OUT:
+                        toast = Toast.makeText(getApplicationContext(),
+                                "YOU WERE TAGGED OUT", Toast.LENGTH_LONG);
+                        toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+                        toast.show();
+                        break;
+                    case ENDED:
+                        // get the user name and the visibility matrix
+                        String userName = application.getBlackboard().userName().value();
+                        VisibilityMatrix visibilityMatrix = application.getBlackboard()
+                                .visibilityMatrix().value();
+                        // check if the user was tagged out
+                        if (visibilityMatrix.getOut().contains(userName)) {
+                            toast = Toast.makeText(getApplicationContext(),
+                                    "ENDGAME: YOU LOST...", Toast.LENGTH_LONG);
+                        } else {
+                            toast = Toast.makeText(getApplicationContext(),
+                                    "ENDGAME: YOU WON!", Toast.LENGTH_LONG);
+                        }
+                        toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+                        toast.show();
+                        break;
+                }
+            }
+        });
     }
 
     @Override
