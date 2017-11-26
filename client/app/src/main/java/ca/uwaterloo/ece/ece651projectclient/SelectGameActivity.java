@@ -85,10 +85,11 @@ public class SelectGameActivity extends AppCompatActivity {
             application.getBlackboard().numberOfPlayers().set(Integer.parseInt(value));
             check = 1;
         } else if (!TextUtils.isEmpty(value) && !TextUtils.isEmpty(editOtherNames.getText().toString())) {
-            Toast toast = Toast.makeText(getApplicationContext(),
-                    "Enter either other users of number of players", Toast.LENGTH_SHORT);
-            toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
-            toast.show();
+            //Update otherNames to blackboard
+            application.getBlackboard().othersNames().set(names);
+            // Update NumberOfPlayers to Blackboard
+            application.getBlackboard().numberOfPlayers().set(Integer.parseInt(value));
+            check = 1;
         } else if (TextUtils.isEmpty(value) && TextUtils.isEmpty(editOtherNames.getText().toString())) {
             Toast toast = Toast.makeText(getApplicationContext(),
                     "Enter either other users of number of players", Toast.LENGTH_SHORT);
