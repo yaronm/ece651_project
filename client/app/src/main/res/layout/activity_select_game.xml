@@ -1,158 +1,156 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                             xmlns:app="http://schemas.android.com/apk/res-auto"
-                                             xmlns:tools="http://schemas.android.com/tools"
-                                             android:layout_width="match_parent"
-                                             android:layout_height="match_parent"
-                                             tools:context="ca.uwaterloo.ece.ece651projectclient.SelectGameActivity"
-                                             tools:layout_editor_absoluteY="81dp">
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="10dp"
+    android:fillViewport="false">
 
-    <Button
-        android:id="@+id/buttonJoin"
-        android:layout_width="0dp"
-        android:layout_height="52dp"
-        android:layout_marginBottom="24dp"
-        android:layout_marginEnd="17dp"
-        android:layout_marginStart="17dp"
-        android:layout_marginTop="8dp"
-        android:onClick="onJoinClick"
-        android:text="Join"
-        app:layout_constraintBottom_toTopOf="@+id/view"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/spinnerAvailableGames"/>
-
-    <View
-        android:id="@+id/view"
-        android:layout_width="0dp"
-        android:layout_height="5dp"
-        android:layout_marginBottom="14dp"
-        android:background="@android:color/black"
-        app:layout_constraintBottom_toTopOf="@+id/editNoOfPlayers"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/buttonJoin"/>
-
-    <EditText
-        android:id="@+id/editNoOfPlayers"
-        android:layout_width="0dp"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="21dp"
-        android:layout_marginEnd="19dp"
-        android:layout_marginStart="19dp"
-        android:ems="10"
-        android:hint="Enter No. of Players"
-        android:inputType="textPersonName|number"
-        app:layout_constraintBottom_toTopOf="@+id/editOtherNames"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/view"/>
+        android:orientation="vertical">
 
-    <Button
-        android:id="@+id/buttonCreateGame"
-        android:layout_width="352dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:onClick="onCreateGameClick"
-        android:text="Create Game"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/radioGroupSelectMatrixType"
-        app:layout_constraintStart_toEndOf="@+id/radioGroupSelectMatrixType"
-        app:layout_constraintTop_toBottomOf="@+id/radioGroupSelectMatrixType"/>
-
-    <RadioGroup
-        android:id="@+id/radioGroupSelectMatrixType"
-        android:layout_width="191dp"
-        android:layout_height="0dp"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toTopOf="@+id/buttonCreateGame"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView2">
-
-        <RadioButton
-            android:id="@+id/radioTypeAssassin"
-            android:layout_width="151dp"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="8dp"
-            android:onClick="onClick"
-            android:text="ASSASSIN"
+        <Spinner
+            android:id="@+id/spinnerAvailableGames"
+            android:layout_width="327dp"
+            android:layout_height="40dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginLeft="12dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/editOtherNames"/>
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <RadioButton
-            android:id="@+id/radioTypeHideNSeek"
-            android:layout_width="151dp"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="16dp"
+        <Button
+            android:id="@+id/buttonJoin"
+            android:layout_width="326dp"
+            android:layout_height="match_parent"
+            android:layout_marginBottom="24dp"
+            android:layout_marginEnd="17dp"
+            android:layout_marginStart="17dp"
             android:layout_marginTop="8dp"
-            android:onClick="onClick"
-            android:text="HIDE_N_SEEK"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/radioTypeAssassin"/>
+            android:onClick="onJoinClick"
+            android:text="Join"
+            app:layout_constraintBottom_toTopOf="@+id/view"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.029"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/spinnerAvailableGames" />
 
-        <RadioButton
-            android:id="@+id/radioTypeCustom"
-            android:layout_width="151dp"
+        <View
+            android:id="@+id/view"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_marginBottom="14dp"
+            android:background="@android:color/black"
+            app:layout_constraintBottom_toTopOf="@+id/editNoOfPlayers"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/buttonJoin" />
+
+        <EditText
+            android:id="@+id/editOtherNames"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="16dp"
-            android:layout_marginTop="8dp"
-            android:onClick="onClick"
-            android:text="CUSTOM"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/radioTypeHideNSeek"/>
-    </RadioGroup>
+            android:layout_marginBottom="15dp"
+            android:layout_marginEnd="17dp"
+            android:layout_marginStart="17dp"
+            android:ems="10"
+            android:hint="Enter other users"
+            android:inputType="textPersonName"
+            app:layout_constraintBottom_toTopOf="@+id/textView2"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/editNoOfPlayers" />
 
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="347dp"
-        android:layout_height="34dp"
-        android:text="Select Matrix Type"
-        android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        app:layout_constraintBottom_toTopOf="@+id/radioGroupSelectMatrixType"
-        app:layout_constraintEnd_toEndOf="@+id/radioGroupSelectMatrixType"
-        app:layout_constraintStart_toEndOf="@+id/radioGroupSelectMatrixType"
-        app:layout_constraintTop_toBottomOf="@+id/editOtherNames"/>
+        <TextView
+            android:layout_width="36dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center_horizontal"
+            android:text="OR"
+            android:textAppearance="@style/TextAppearance.AppCompat.Button" />
 
-    <EditText
-        android:id="@+id/editOtherNames"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="15dp"
-        android:layout_marginEnd="17dp"
-        android:layout_marginStart="17dp"
-        android:ems="10"
-        android:hint="Enter other users"
-        android:inputType="textPersonName"
-        app:layout_constraintBottom_toTopOf="@+id/textView2"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editNoOfPlayers"/>
+        <EditText
+            android:id="@+id/editNoOfPlayers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="21dp"
+            android:layout_marginEnd="19dp"
+            android:layout_marginStart="19dp"
+            android:ems="10"
+            android:hint="Enter No. of Players"
+            android:inputType="textPersonName|number"
+            app:layout_constraintBottom_toTopOf="@+id/editOtherNames"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/view" />
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="292dp"
-        android:text="OR"
-        android:textAppearance="@style/TextAppearance.AppCompat.Headline"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        />
+        <TextView
+            android:layout_width="330dp"
+            android:layout_height="37dp"
+            android:layout_gravity="center_horizontal"
+            android:text="Select Matrix Type"
+            android:textAppearance="@style/TextAppearance.AppCompat.Button" />
 
-    <Spinner
-        android:id="@+id/spinnerAvailableGames"
-        android:layout_width="0dp"
-        android:layout_height="20dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginLeft="12dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        <RadioGroup
+            android:id="@+id/radioGroupSelectMatrixType"
+            android:layout_width="191dp"
+            android:layout_height="161dp"
+            android:orientation="vertical"
+            app:layout_constraintBottom_toTopOf="@+id/buttonCreateGame"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView2">
+
+            <RadioButton
+                android:id="@+id/radioTypeAssassin"
+                android:layout_width="151dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="8dp"
+                android:onClick="onClick"
+                android:text="ASSASSIN"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/editOtherNames" />
+
+            <RadioButton
+                android:id="@+id/radioTypeHideNSeek"
+                android:layout_width="151dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="8dp"
+                android:onClick="onClick"
+                android:text="HIDE_N_SEEK"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/radioTypeAssassin" />
+
+            <RadioButton
+                android:id="@+id/radioTypeCustom"
+                android:layout_width="151dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginTop="8dp"
+                android:onClick="onClick"
+                android:text="CUSTOM"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/radioTypeHideNSeek" />
+        </RadioGroup>
+
+        <Button
+            android:id="@+id/buttonCreateGame"
+            android:layout_width="352dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:onClick="onCreateGameClick"
+            android:text="Create Game"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/radioGroupSelectMatrixType"
+            app:layout_constraintStart_toEndOf="@+id/radioGroupSelectMatrixType"
+            app:layout_constraintTop_toBottomOf="@+id/radioGroupSelectMatrixType" />
 
 
-</android.support.constraint.ConstraintLayout>
+    </LinearLayout>
+</ScrollView>
