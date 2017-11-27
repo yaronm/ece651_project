@@ -61,7 +61,7 @@ public class SelectGameActivity extends AppCompatActivity {
         //Get GameId
         Spinner availableGames = (Spinner) findViewById(R.id.spinnerAvailableGames);
         //Join game only is spinner is populated
-        if (availableGames.getCount()==0){
+        if (availableGames.getAdapter().getCount()==0){
             Toast toast = Toast.makeText(getApplicationContext(),
                     "No games available to join", Toast.LENGTH_SHORT);
             toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
