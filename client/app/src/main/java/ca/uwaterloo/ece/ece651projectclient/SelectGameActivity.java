@@ -44,6 +44,10 @@ public class SelectGameActivity extends AppCompatActivity {
                 availableGames.setAdapter(adapter);
             }
         });
+        //check the first Visibility Matrix Type by default
+        radioGroup = (RadioGroup) findViewById(R.id.radioGroupSelectMatrixType);
+        radioGroup.check(radioGroup.getChildAt(0).getId());
+        radioButton = (RadioButton)findViewById(radioGroup.getCheckedRadioButtonId());
     }
 
     @Override
@@ -56,15 +60,22 @@ public class SelectGameActivity extends AppCompatActivity {
     public void onJoinClick(View view) {
         //Get GameId
         Spinner availableGames = (Spinner) findViewById(R.id.spinnerAvailableGames);
-        // Update GameId to Blackboard
-        application.getBlackboard().currentGameId().set(
-                availableGames.getSelectedItem().toString());
-        //Change Game state to Join Game
-        application.getBlackboard().gameState().set(GameState.JOINING);
-        //Start Game Activity
-        Intent intent = new Intent(this, GameActivity.class);
-        startActivity(intent);
-
+        //Join game only is spinner is populated
+        if (availableGames.getCount()==0){
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    "No games available to join", Toast.LENGTH_SHORT);
+            toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+            toast.show();
+        } else {
+            // Update GameId to Blackboard
+            application.getBlackboard().currentGameId().set(
+                    availableGames.getSelectedItem().toString());
+            //Change Game state to Join Game
+            application.getBlackboard().gameState().set(GameState.JOINING);
+            //Start Game Activity
+            Intent intent = new Intent(this, GameActivity.class);
+            startActivity(intent);
+        }
     }
 
     public void onCreateGameClick(View view) {
@@ -75,21 +86,21 @@ public class SelectGameActivity extends AppCompatActivity {
         EditText editNoOfPlayers = (EditText) findViewById(R.id.editNoOfPlayers);
         String value = editNoOfPlayers.getText().toString();
         //check if either of those two are given
-        int check = 0;
+        boolean check = false;
         if (TextUtils.isEmpty(value) && !TextUtils.isEmpty(editOtherNames.getText().toString())) {
             //Update otherNames to blackboard
             application.getBlackboard().othersNames().set(names);
-            check = 1;
+            check = true;
         } else if (!TextUtils.isEmpty(value) && TextUtils.isEmpty(editOtherNames.getText().toString())) {
             // Update NumberOfPlayers to Blackboard
             application.getBlackboard().numberOfPlayers().set(Integer.parseInt(value));
-            check = 1;
+            check = true;
         } else if (!TextUtils.isEmpty(value) && !TextUtils.isEmpty(editOtherNames.getText().toString())) {
             //Update otherNames to blackboard
             application.getBlackboard().othersNames().set(names);
             // Update NumberOfPlayers to Blackboard
             application.getBlackboard().numberOfPlayers().set(Integer.parseInt(value));
-            check = 1;
+            check = true;
         } else if (TextUtils.isEmpty(value) && TextUtils.isEmpty(editOtherNames.getText().toString())) {
             Toast toast = Toast.makeText(getApplicationContext(),
                     "Enter either other users of number of players", Toast.LENGTH_SHORT);
@@ -107,10 +118,11 @@ public class SelectGameActivity extends AppCompatActivity {
                 application.getBlackboard().visibilityMatrixType().set(VisibilityMatrixType.CUSTOM);
                 break;
         }
-        //Change Game state to Create Game
-        application.getBlackboard().gameState().set(GameState.CREATING);
-        //Start Game Activity
-        if (check == 1) {
+
+        if (check) {
+            //Change Game state to Create Game
+            application.getBlackboard().gameState().set(GameState.CREATING);
+            //Start Game Activity
             Intent intent = new Intent(this, GameActivity.class);
             startActivity(intent);
         }
@@ -118,11 +130,8 @@ public class SelectGameActivity extends AppCompatActivity {
     }
 
     public void onClick(View v) {
-        radioGroup = (RadioGroup) findViewById(R.id.radioGroupSelectMatrixType);
-
         // get selected radio button from radioGroup
         int selectedId = radioGroup.getCheckedRadioButtonId();
-
         // find the radio button by returned id
         radioButton = (RadioButton) findViewById(selectedId);
 
